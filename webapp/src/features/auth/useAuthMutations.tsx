@@ -18,15 +18,12 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const { setUser } = useAuth();
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: (input: Omit<RegisterInput, "confirmPassword">) =>
-      registerRequest(input),
-    onSuccess: (data) => {
-      setUser(data.user);
-      navigate("/dashboard");
+    mutationFn: (input: RegisterInput) => registerRequest(input),
+    onSuccess: () => {
+      navigate("/login");
     },
   });
 }

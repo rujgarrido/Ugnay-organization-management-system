@@ -1,8 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { getAccessToken, setAccessToken, clearAccessToken } from "./auth-token";
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api/v1";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
   withCredentials: true, // sends the httpOnly refresh-token cookie automatically
 });
 
@@ -21,13 +23,13 @@ api.interceptors.request.use((config) => {
 let refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {
-  const { data } = await axios.post<{ accessToken: string }>(
-    `${import.meta.env.VITE_API_URL}/auth/refresh`,
+  const { data } = await axios.post<{ data: { accessToken: string } }>(
+    `${API_URL}/auth/refresh`,
     {},
     { withCredentials: true }
   );
-  setAccessToken(data.accessToken);
-  return data.accessToken;
+  setAccessToken(data.data.accessToken);
+  return data.data.accessToken;
 }
 
 api.interceptors.response.use(

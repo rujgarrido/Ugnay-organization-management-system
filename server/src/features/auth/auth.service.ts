@@ -28,14 +28,13 @@ export class AuthService {
             passwordHash: hashedPassword
          });
 
-         return {
+            const user = {
             id: newUser.id,
             firstName:newUser.firstName,
             lastName: newUser.lastName,
             email: newUser.email,}; // Return the newly created user object (excluding the password).
 
-        
-
+             return user;
     }
 
     login = async(data: { email: string; password: string }) => {
@@ -71,7 +70,16 @@ export class AuthService {
             expiresAt: expiresAt,
         });
         
-        return{ accessToken, refreshToken: refreshtoken } 
+        return {
+            accessToken,
+            refreshToken: refreshtoken,
+            user: {
+                id: existingUser.id,
+                firstName: existingUser.firstName,
+                lastName: existingUser.lastName,
+                email: existingUser.email,
+            },
+        };
     }
 
     logout = async (refreshToken: string) => {
@@ -134,7 +142,12 @@ export class AuthService {
             expiresAt: expiresAt,
         });
 
-        return { accessToken: newAccessToken, refreshToken: newRawRefreshToken };
+        const user = await this.authRepository.findUserById(payload.id);
+        if (!user) {
+            throw new AppError('User not found', 404);
+        }
+
+        return { accessToken: newAccessToken, refreshToken: newRawRefreshToken, user };
 
     }
 }

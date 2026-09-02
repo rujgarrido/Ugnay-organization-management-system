@@ -12,6 +12,13 @@ export class AuthRepository {
         return prisma.user.findUnique({ where: { email } });
     }
 
+    findUserById = async(id: string) => {
+        return prisma.user.findUnique({
+            where: { id },
+            select: { id: true, firstName: true, lastName: true, email: true },
+        });
+    }
+
     // This method creates a new user in the database with the provided data.
     createUser = async(data: { firstName: string; lastName: string; email: string; passwordHash: string }) => {
         

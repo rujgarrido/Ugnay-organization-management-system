@@ -1,20 +1,8 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { api } from "../../lib/axios";
 import { setAccessToken, clearAccessToken } from "../../lib/auth-token";
-import type { User, AuthResponse } from "./types";
-
-interface AuthContextValue {
-  user: User | null;
-  isLoading: boolean;
-  setUser: (user: User | null) => void;
-}
-
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+import { AuthContext } from "./auth-context";
+import type { AuthResponse, User } from "./types";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -25,9 +13,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function bootstrap() {
       try {
-        const { data } = await api.post<AuthResponse>("/auth/refresh");
-        setAccessToken(data.accessToken);
-        setUser(data.user);
+        const { data } = await api.post<{ data: AuthResponse }>("/auth/refresh");
+        setAccessToken(data.data.accessToken);
+        setUser(data.data.user);
       } catch {
         clearAccessToken();
         setUser(null);

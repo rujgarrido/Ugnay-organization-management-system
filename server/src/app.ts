@@ -17,8 +17,18 @@ export function createApp(): Express {
   // helmet and cors should be registered before any other middleware to ensure security and cross-origin requests are handled properly
   app.use(helmet());
   
-  // CORS configuration to allow requests from the specified origin and include credentials (cookies, authorization headers, etc.)
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  // Support comma-separated local origins while keeping credentialed requests restricted.
+  const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Origin is not allowed by CORS'));
+    },
+    credentials: true,
+  }));
   
   // Middleware to parse JSON request bodies
   app.use(express.json());

@@ -42,8 +42,8 @@ coverage/
 
 # Docker
 docker/*.local.yml
-<<<<<<< HEAD
-=======
+
+
 # Logs
 logs
 *.log
@@ -101,6 +101,9 @@ web_modules/
 
 # Optional stylelint cache
 .stylelintcache
+
+# Microbundle cache
+*.tsbuildinfo
 
 # Optional REPL history
 .node_repl_history
@@ -187,6 +190,5 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
->>>>>>> b5948adfdd8de475070516a0eae4ef7fc87d7d3c
 =======
 >>>>>>> 3de589d (configure new .env template)

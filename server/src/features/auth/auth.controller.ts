@@ -14,16 +14,12 @@ export class AuthController {
     const data = req.body; 
 
     // Call the authService to handle the registration logic
-    await this.authService.register(data);
+    const user = await this.authService.register(data);
 
     return res.status(201).json({
       status: 201,
       message: "User registered successfully",
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email
-      }
+      data: { user }
     });
   }
      
@@ -34,7 +30,7 @@ export class AuthController {
     const data = req.body;
 
     // Call the authService to handle the login logic
-    const { accessToken, refreshToken } = await this.authService.login(data);  
+    const { accessToken, refreshToken, user } = await this.authService.login(data);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -46,7 +42,7 @@ export class AuthController {
     return res.status(200).json({
       status: 200,
       message: "Logged in successfully",
-      data: { accessToken }
+      data: { accessToken, user }
     })
   };
 
@@ -75,20 +71,20 @@ export class AuthController {
   refresh = async (req: Request, res: Response) => {
   const rawRefreshToken = req.cookies.refreshToken;
 
-  const { accessToken, refreshToken } = await this.authService.refreshTokens(rawRefreshToken);
+  const { accessToken, refreshToken, user } = await this.authService.refreshTokens(rawRefreshToken);
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
     maxAge: REFRESH_TOKEN_TTL_MS,
   });
 
   return res.status(200).json({
     status: 200,
     message: 'Token refreshed',
-    data: { accessToken },
+    data: { accessToken, user },
     });
-  }
+  };
 }
 
