@@ -1,4 +1,4 @@
-# TaskFlow — Solo Developer Implementation Guide
+# Ugnay — Solo Developer Implementation Guide
 ### A 2-Week Agile-Inspired Roadmap (Planning → Design → Deployment)
 
 > **How to use this document:** This is your roadmap, not your code. It tells you *what* to do, *why*, *what should exist afterward*, and *how to verify it worked*. No application code is included. When you're ready to implement a specific task, come back and ask me to walk through it — we'll do it one task at a time, verifying as we go.

@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import {  AuthService} from './auth.service';
 import { REFRESH_TOKEN_TTL_MS } from '../../config/constants';
 import { env } from '../../config/env';
+import { setCsrfCookie } from '../../middleware/csrf';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class AuthController {
     
@@ -35,9 +37,12 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production', // Use secure cookies in production
-      sameSite: 'strict', // Adjust based on your requirements
+      sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
       maxAge: REFRESH_TOKEN_TTL_MS, // 7 days in milliseconds
     });
+
+    // CSRF token → readable cookie
+    setCsrfCookie(res);
 
     return res.status(200).json({
       status: 200,
@@ -71,7 +76,7 @@ export class AuthController {
   refresh = async (req: Request, res: Response) => {
   const rawRefreshToken = req.cookies.refreshToken;
 
-  const { accessToken, refreshToken, user } = await this.authService.refreshTokens(rawRefreshToken);
+  const { accessToken, refreshToken } = await this.authService.refreshTokens(rawRefreshToken);
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
@@ -83,8 +88,20 @@ export class AuthController {
   return res.status(200).json({
     status: 200,
     message: 'Token refreshed',
-    data: { accessToken, user },
+    data: { accessToken },
     });
   };
+
+  // Controller function for getting the current user
+  getCurrentUser = async (req: AuthenticatedRequest , res: Response) => {
+    const user =  await this.authService.getCurrentUser(req.body.id) // Assuming the user is attached to the request object by authentication middleware
+    
+    return res.status(200).json({
+      status: 200,
+      message: "Current user retrieved successfully",
+      data: { user }
+    });
+  }
 }
+
 

@@ -3,6 +3,11 @@ import { getAccessToken, setAccessToken, clearAccessToken } from "./auth-token";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api/v1";
 
+function getCookie(name: string): string | null {
+  const prefix = `${name}=`;
+  return document.cookie.split("; ").find((cookie) => cookie.startsWith(prefix))?.slice(prefix.length) ?? null;
+}
+
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // sends the httpOnly refresh-token cookie automatically
@@ -13,6 +18,10 @@ api.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase() ?? "")) {
+    const csrfToken = getCookie("csrfToken");
+    if (csrfToken) config.headers["X-CSRF-Token"] = csrfToken;
   }
   return config;
 });
@@ -35,9 +44,13 @@ async function refreshAccessToken(): Promise<string> {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & {
+    const originalRequest = error.config as (InternalAxiosRequestConfig & {
       _retry?: boolean;
-    };
+    }) | undefined;
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
 
     const isAuthEndpoint = originalRequest.url?.includes("/auth/");
     if (error.response?.status !== 401 || originalRequest._retry || isAuthEndpoint) {

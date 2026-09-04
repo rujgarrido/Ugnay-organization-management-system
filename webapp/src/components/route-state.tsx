@@ -1,0 +1,7 @@
+export function RouteLoading() {
+  return (
+    <main className="flex min-h-screen items-center justify-center" aria-live="polite">
+      Loading...
+    </main>
+  );
+}

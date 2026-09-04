@@ -147,7 +147,20 @@ export class AuthService {
             throw new AppError('User not found', 404);
         }
 
-        return { accessToken: newAccessToken, refreshToken: newRawRefreshToken, user };
+        return { accessToken: newAccessToken, refreshToken: newRawRefreshToken };
 
+    }
+
+    getCurrentUser = async (userId: string) => {
+        // Fetch the user details from the database using the provided userId
+        
+
+        const user = await this.authRepository.findUserById(userId);
+
+        if (!user) {
+            throw new AppError('User not found', 404);
+        }
+
+        return user;
     }
 }
