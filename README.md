@@ -84,5 +84,6 @@ See `docs/`
 MIT License
 
 Developed by: Rujonht Garrido
+
 Copyright (c) 2026 Ugnay
 
