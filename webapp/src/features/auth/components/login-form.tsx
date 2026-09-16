@@ -1,11 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AuthField, AuthFormError } from "./auth-field";
 import { loginSchema, type LoginInput } from "../schemas/login-schema";
 import { useLogin } from "../hooks/use-login";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
+import { ArrowRight, Loader2, LockKeyhole, Mail } from "lucide-react";
 
 export function LoginForm() {
   const login = useLogin();
@@ -15,28 +15,43 @@ export function LoginForm() {
   });
 
   return (
-    <form onSubmit={form.handleSubmit((values) => login.mutate(values))} className="auth-form">
-      <div className="space-y-2">
-        <label htmlFor="email" className="field-label">Email</label>
-        <div className="field-with-icon">
-          <Mail size={18} />
-          <Input id="email" type="email" placeholder="you@company.com" autoComplete="email" aria-invalid={!!form.formState.errors.email} {...form.register("email")} />
-        </div>
-        {form.formState.errors.email && <p className="field-error">{form.formState.errors.email.message}</p>}
-      </div>
+    <form onSubmit={form.handleSubmit((values) => login.mutate(values))} className="grid gap-4" noValidate>
+      <AuthField
+        label="Email"
+        id="email"
+        type="email"
+        placeholder="you@company.com"
+        autoComplete="email"
+        icon={<Mail />}
+        registration={form.register("email")}
+        error={form.formState.errors.email?.message}
+      />
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="field-label">Password</label>
-        <div className="field-with-icon">
-          <LockKeyhole size={18} />
-          <Input id="password" type="password" placeholder="Enter your password" autoComplete="current-password" aria-invalid={!!form.formState.errors.password} {...form.register("password")} />
-        </div>
-        {form.formState.errors.password && <p className="field-error">{form.formState.errors.password.message}</p>}
-      </div>
+      <AuthField
+        label="Password"
+        id="password"
+        type="password"
+        placeholder="Enter your password"
+        autoComplete="current-password"
+        icon={<LockKeyhole />}
+        registration={form.register("password")}
+        error={form.formState.errors.password?.message}
+      />
 
-      {login.isError && <p className="form-error">{getApiErrorMessage(login.error)}</p>}
-      <Button type="submit" className="auth-submit" disabled={login.isPending}>
-        {login.isPending ? "Logging in..." : <>Log in <ArrowRight size={17} /></>}
+      {login.isError && <AuthFormError message={getApiErrorMessage(login.error)} />}
+
+      <Button type="submit" size="lg" className="w-full" disabled={login.isPending} aria-busy={login.isPending}>
+        {login.isPending ? (
+          <>
+            <Loader2 className="animate-spin" data-icon="inline-start" />
+            Logging in...
+          </>
+        ) : (
+          <>
+            <ArrowRight data-icon="inline-end" />
+            Log in
+          </>
+        )}
       </Button>
     </form>
   );

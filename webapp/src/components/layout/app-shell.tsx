@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { AppSidebar } from "./app-sidebar";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
+import { UgnayMark } from "@/components/brand/ugnay-mark";
 import { useAuth } from "@/features/auth/useAuth";
 import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 import { getInitials, cn } from "@/lib/utils";
@@ -11,12 +12,7 @@ import { getInitials, cn } from "@/lib/utils";
 function BrandMark() {
   return (
     <div className="flex items-center gap-2 px-1">
-      <span
-        className="flex size-7 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
-        aria-hidden="true"
-      >
-        U
-      </span>
+      <UgnayMark className="size-7" />
       <span className="text-sm font-semibold tracking-tight">ugnay</span>
     </div>
   );

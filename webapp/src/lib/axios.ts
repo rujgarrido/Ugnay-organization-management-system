@@ -32,11 +32,10 @@ api.interceptors.request.use((config) => {
 let refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {
-  const { data } = await axios.post<{ data: { accessToken: string } }>(
-    `${API_URL}/auth/refresh`,
-    {},
-    { withCredentials: true }
-  );
+  // Uses the `api` instance (not bare axios) so the request interceptor
+  // attaches the X-CSRF-Token header — /auth/refresh is CSRF-protected and
+  // a bare-axios call would fail with 403 (FLAG-10).
+  const { data } = await api.post<{ data: { accessToken: string } }>("/auth/refresh");
   setAccessToken(data.data.accessToken);
   return data.data.accessToken;
 }

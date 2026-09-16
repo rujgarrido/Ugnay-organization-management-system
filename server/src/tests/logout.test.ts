@@ -1,26 +1,28 @@
 import { AuthService } from '../features/auth/auth.service';
-import { AuthRepository } from '../features/auth/auth.repository';
+import { prisma } from '../config/database';
 
-import {
-  hashRefreshToken,
-} from '../lib/jwt.util';
+import { hashRefreshToken } from '../lib/jwt.util';
 
 jest.mock('../lib/jwt.util');
 
-describe('AuthService - logout', () => {
-  const mockAuthRepository = {
-    findRefreshToken: jest.fn(),
-    revokeRefreshToken: jest.fn(),
-  };
+jest.mock('../config/database', () => ({
+  prisma: {
+    refreshToken: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
+    organizationMember: { findMany: jest.fn() },
+    user: { findUnique: jest.fn() },
+  },
+}));
 
+const prismaMock = prisma as unknown as {
+  refreshToken: { findUnique: jest.Mock; update: jest.Mock };
+};
+
+describe('AuthService - logout', () => {
   let authService: AuthService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    authService = new AuthService(
-      mockAuthRepository as unknown as AuthRepository,
-    );
+    authService = new AuthService();
   });
 
   describe('logout', () => {
@@ -28,7 +30,7 @@ describe('AuthService - logout', () => {
       (hashRefreshToken as jest.Mock)
         .mockReturnValue('hashed-refresh-token');
 
-      mockAuthRepository.findRefreshToken.mockResolvedValue({
+      prismaMock.refreshToken.findUnique.mockResolvedValue({
         id: 'token-row-1',
         userId: 'user-1',
         tokenHash: 'hashed-refresh-token',
@@ -37,16 +39,18 @@ describe('AuthService - logout', () => {
 
       await authService.logout('raw-refresh-token');
 
-      expect(mockAuthRepository.revokeRefreshToken)
-        .toHaveBeenCalledWith('token-row-1');
+      expect(prismaMock.refreshToken.update)
+        .toHaveBeenCalledWith({
+          where: { id: 'token-row-1' },
+          data: { revokedAt: expect.any(Date) },
+        });
     });
 
     it('throws a 401 AppError when the token is not found', async () => {
       (hashRefreshToken as jest.Mock)
         .mockReturnValue('unknown-hash');
 
-      mockAuthRepository.findRefreshToken
-        .mockResolvedValue(null);
+      prismaMock.refreshToken.findUnique.mockResolvedValue(null);
 
       await expect(
         authService.logout('bad-token'),
@@ -55,7 +59,7 @@ describe('AuthService - logout', () => {
         statusCode: 401,
       });
 
-      expect(mockAuthRepository.revokeRefreshToken)
+      expect(prismaMock.refreshToken.update)
         .not.toHaveBeenCalled();
     });
 
@@ -63,7 +67,7 @@ describe('AuthService - logout', () => {
       (hashRefreshToken as jest.Mock)
         .mockReturnValue('hashed-refresh-token');
 
-      mockAuthRepository.findRefreshToken.mockResolvedValue({
+      prismaMock.refreshToken.findUnique.mockResolvedValue({
         id: 'token-row-1',
         userId: 'user-1',
         tokenHash: 'hashed-refresh-token',
@@ -74,7 +78,7 @@ describe('AuthService - logout', () => {
         authService.logout('raw-refresh-token'),
       ).resolves.toBeUndefined();
 
-      expect(mockAuthRepository.revokeRefreshToken)
+      expect(prismaMock.refreshToken.update)
         .not.toHaveBeenCalled();
     });
   });

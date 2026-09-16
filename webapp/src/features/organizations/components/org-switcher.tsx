@@ -1,13 +1,15 @@
 ﻿import { useState } from "react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 import { useDismiss } from "@/hooks/use-dismiss";
 import { cn } from "@/lib/utils";
+import { hasPermission, PERMISSIONS } from "../types";
 import { useActiveOrg } from "../hooks/use-active-org";
 
 /**
  * Top-nav organization switcher (US-1.6): always shows the active
- * organization, lists the user''s orgs plus a create action, and
+ * organization, lists the user's orgs plus a create action, and
  * re-scopes every organization-scoped query on selection.
  */
 export function OrgSwitcher() {
@@ -20,6 +22,11 @@ export function OrgSwitcher() {
   }
 
   const activeOrg = activeMembership?.organization ?? memberships[0].organization;
+
+  // Settings entry point (US-2.6/2.7): the config pages are admin-only, so
+  // the link itself is hidden for members without MANAGE_MEMBERS instead of
+  // showing a permission-denied dead end.
+  const canManageOrg = hasPermission(activeMembership, PERMISSIONS.MANAGE_MEMBERS);
 
   return (
     <div ref={ref} className="relative min-w-0">
@@ -94,6 +101,20 @@ export function OrgSwitcher() {
           >
             <Plus className="size-3.5" aria-hidden="true" /> Create new organization
           </button>
+
+          {canManageOrg && (
+            <>
+              <div className="my-1 h-px bg-border" />
+              <Link
+                to="/organization/profile"
+                role="menuitem"
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                onClick={() => setIsOpen(false)}
+              >
+                <Settings className="size-3.5" aria-hidden="true" /> Organization settings
+              </Link>
+            </>
+          )}
         </div>
       )}
 

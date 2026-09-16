@@ -1,4 +1,4 @@
-﻿import { useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -13,15 +13,22 @@ import { taskFormSchema, type TaskFormInput } from "../../schemas/task-schema";
 interface NewTaskDialogProps {
   open: boolean;
   onClose: () => void;
+  orgId: string;
   projectId: string;
-  assigneeOptions: string[];
+  assigneeOptions: Array<{ id: string; name: string }>;
 }
 
-export function NewTaskDialog({ open, onClose, projectId, assigneeOptions }: NewTaskDialogProps) {
-  const createTask = useCreateTask(projectId);
+export function NewTaskDialog({
+  open,
+  onClose,
+  orgId,
+  projectId,
+  assigneeOptions,
+}: NewTaskDialogProps) {
+  const createTask = useCreateTask(orgId, projectId);
   const form = useForm<TaskFormInput>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: { title: "", description: "", priority: "medium", assigneeName: "", dueDate: "" },
+    defaultValues: { title: "", description: "", priority: "medium", assigneeId: "", dueDate: "" },
   });
 
   function handleSubmit(values: TaskFormInput) {
@@ -75,12 +82,12 @@ export function NewTaskDialog({ open, onClose, projectId, assigneeOptions }: New
             <select
               id="task-assignee"
               className="h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              {...form.register("assigneeName")}
+              {...form.register("assigneeId")}
             >
               <option value="">Unassigned</option>
-              {assigneeOptions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              {assigneeOptions.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
                 </option>
               ))}
             </select>

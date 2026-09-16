@@ -1,107 +1,110 @@
-import { Request, Response } from 'express';
-import {  AuthService} from './auth.service';
+import type { Request, Response } from 'express';
+import { AuthService } from './auth.service';
 import { REFRESH_TOKEN_TTL_MS } from '../../config/constants';
 import { env } from '../../config/env';
-import { setCsrfCookie } from '../../middleware/csrf';
+import { issueCsrfToken, setCsrfCookie } from '../../middleware/csrf';
+import { AppError } from '../../middleware/errorHandler';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class AuthController {
-    
+
     constructor(private readonly authService: AuthService) {}
 
+    // Issues a fresh CSRF cookie on a safe method so the frontend can
+    // bootstrap (read csrfToken cookie -> attach X-CSRF-Token header).
+    issueCsrf = async (req: Request, res: Response) => {
+        const csrfToken = issueCsrfToken(res);
 
-// Controller function for user registration
-  register = async (req: Request, res: Response) => {
-    
-    const data = req.body; 
+        return res.status(200).json({
+            status: 200,
+            message: 'CSRF token issued',
+            data: { csrfToken },
+        });
+    };
 
-    // Call the authService to handle the registration logic
-    const user = await this.authService.register(data);
+    register = async (req: Request, res: Response) => {
+        const user = await this.authService.register(req.body);
 
-    return res.status(201).json({
-      status: 201,
-      message: "User registered successfully",
-      data: { user }
-    });
-  }
-     
+        return res.status(201).json({
+            status: 201,
+            message: 'User registered successfully',
+            data: { user },
+        });
+    };
 
-  // Controller function for user login
-  login = async (req: Request, res: Response) => {
+    login = async (req: Request, res: Response) => {
+        const { accessToken, refreshToken, user } = await this.authService.login(req.body);
 
-    const data = req.body;
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: env.NODE_ENV === 'production',
+            sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: REFRESH_TOKEN_TTL_MS,
+        });
 
-    // Call the authService to handle the login logic
-    const { accessToken, refreshToken, user } = await this.authService.login(data);
+        // CSRF token -> readable cookie (double-submit pattern)
+        setCsrfCookie(res);
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production', // Use secure cookies in production
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
-      maxAge: REFRESH_TOKEN_TTL_MS, // 7 days in milliseconds
-    });
+        return res.status(200).json({
+            status: 200,
+            message: 'Logged in successfully',
+            data: { accessToken, user },
+        });
+    };
 
-    // CSRF token → readable cookie
-    setCsrfCookie(res);
+    logout = async (req: Request, res: Response) => {
+        const refreshToken = req.cookies.refreshToken;
 
-    return res.status(200).json({
-      status: 200,
-      message: "Logged in successfully",
-      data: { accessToken, user }
-    })
-  };
+        if (!refreshToken) {
+            return res.status(200).json({
+                status: 200,
+                message: 'User is already logged out',
+            });
+        }
 
-  // Controller function for user logout
-  logout = async (req: Request, res: Response) => {
+        await this.authService.logout(refreshToken);
+        res.clearCookie('refreshToken');
 
-    const refreshToken = req.cookies.refreshToken;
+        return res.status(200).json({
+            status: 200,
+            message: 'Logged out successfully',
+        });
+    };
 
-    if (!refreshToken) {
-      return res.status(200).json({
-        status: 200,
-        message: "User is already logged out"
-      });
-    }
-    
-    await this.authService.logout(refreshToken);
-    res.clearCookie('refreshToken');
+    refresh = async (req: Request, res: Response) => {
+        const rawRefreshToken = req.cookies.refreshToken;
 
-    return res.status(200).json({
-      status: 200,
-      message: "Logged out successfully"
-    });
-  };
-  
-  // Controller function for refreshing tokens
-  refresh = async (req: Request, res: Response) => {
-  const rawRefreshToken = req.cookies.refreshToken;
+        const { accessToken, refreshToken, user } = await this.authService.refreshTokens(rawRefreshToken);
 
-  const { accessToken, refreshToken } = await this.authService.refreshTokens(rawRefreshToken);
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: env.NODE_ENV === 'production',
+            sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: REFRESH_TOKEN_TTL_MS,
+        });
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
-    maxAge: REFRESH_TOKEN_TTL_MS,
-  });
+        // user (with memberships) rides along so the frontend can restore the
+        // session and resolve the active organization on a cold page load.
+        return res.status(200).json({
+            status: 200,
+            message: 'Token refreshed',
+            data: { accessToken, user },
+        });
+    };
 
-  return res.status(200).json({
-    status: 200,
-    message: 'Token refreshed',
-    data: { accessToken },
-    });
-  };
+    // FIX (FLAG-3): reads the authenticated id from req.user — the previous
+    // code read req.body.id, which is never set on a GET request.
+    getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user?.id) {
+            throw new AppError('Authentication required', 401);
+        }
 
-  // Controller function for getting the current user
-  getCurrentUser = async (req: AuthenticatedRequest , res: Response) => {
-    const user =  await this.authService.getCurrentUser(req.body.id) // Assuming the user is attached to the request object by authentication middleware
-    
-    return res.status(200).json({
-      status: 200,
-      message: "Current user retrieved successfully",
-      data: { user }
-    });
-  }
+        const user = await this.authService.getCurrentUser(req.user.id);
+
+        return res.status(200).json({
+            status: 200,
+            message: 'Current user retrieved successfully',
+            data: { user },
+        });
+    };
 }
-
-

@@ -3,6 +3,8 @@
 node_modules/
 **/node_modules/
 
+.clinerules
+.agents
 
 .pnp
 .pnp.js
@@ -190,5 +192,3 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
-=======
->>>>>>> 3de589d (configure new .env template)

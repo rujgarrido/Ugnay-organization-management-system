@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FolderKanban, Plus } from "lucide-react";
 import { PageError, PageLoading } from "@/components/page-state";
@@ -89,7 +89,6 @@ export function ProjectsPage() {
       {canCreateProject && (
         <NewProjectDialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} orgId={membership.organization.id} />
       )}
-`r`n
     </div>
   );
 }

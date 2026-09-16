@@ -1,10 +1,8 @@
 ﻿import { NavLink } from "react-router-dom";
 import {
-  Building2,
   FileText,
   FolderKanban,
   LayoutDashboard,
-  ShieldCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -21,24 +19,17 @@ interface NavGroup {
   items: NavItem[];
 }
 
+// Operational navigation only. Organization settings (profile, positions &
+// permissions) is config, not a daily destination — it lives behind the org
+// switcher menu and is gated by MANAGE_MEMBERS (see org-switcher.tsx).
 const NAV_GROUPS: NavGroup[] = [
   {
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/projects", label: "Projects", icon: FolderKanban },
       { to: "/members", label: "Members", icon: Users },
+      { to: "/proposals", label: "Proposals", icon: FileText },
     ],
-  },
-  {
-    label: "Organization",
-    items: [
-      { to: "/organization/profile", label: "Profile", icon: Building2 },
-      { to: "/organization/positions", label: "Positions & Permissions", icon: ShieldCheck },
-    ],
-  },
-  {
-    label: "Proposals",
-    items: [{ to: "/proposals", label: "Proposals", icon: FileText }],
   },
 ];
 

@@ -22,14 +22,22 @@ function cookieOptions() {
   };
 }
 
-// Only creates and sets the CSRF cookie
-export function setCsrfCookie(res: Response): void {
+// Creates and sets the CSRF cookie, and returns the token so a
+// GET /auth/csrf endpoint can also hand it to the client in the body.
+export function issueCsrfToken(res: Response): string {
   const token = randomBytes(32).toString('hex');
 
   res.cookie(CSRF_COOKIE, token, cookieOptions());
+
+  return token;
 }
 
-// Creates and sets the CSRF cookie, and returns the token
+// Only creates and sets the CSRF cookie (login flow)
+export function setCsrfCookie(res: Response): void {
+  issueCsrfToken(res);
+}
+
+// Validates the double-submit CSRF pair on unsafe methods
 export function csrfProtection(
   req: Request,
   _res: Response,

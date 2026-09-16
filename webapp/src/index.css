@@ -3,7 +3,8 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-heading: 'Geist Variable', sans-serif;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -22,124 +23,109 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
+  /* Ugnay brand, expressed as tweekcn-style oklch tokens (Tailwind v4). */
+  --background: oklch(0.978 0.009 95);
+  --foreground: oklch(0.29 0.035 165);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.29 0.035 165);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.29 0.035 165);
+  --primary: oklch(0.305 0.045 170);
+  --primary-foreground: oklch(0.985 0.008 95);
+  --secondary: oklch(0.941 0.014 95);
+  --secondary-foreground: oklch(0.305 0.045 170);
+  --muted: oklch(0.941 0.014 95);
+  --muted-foreground: oklch(0.52 0.03 165);
+  --accent: oklch(0.705 0.14 35);
+  --accent-foreground: oklch(0.26 0.045 170);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.905 0.015 95);
+  --input: oklch(0.905 0.015 95);
+  --ring: oklch(0.705 0.14 35);
+  --chart-1: oklch(0.705 0.14 35);
+  --chart-2: oklch(0.55 0.08 165);
+  --chart-3: oklch(0.45 0.06 170);
+  --chart-4: oklch(0.75 0.1 85);
+  --chart-5: oklch(0.6 0.12 50);
+  --sidebar: oklch(0.985 0.008 95);
+  --sidebar-foreground: oklch(0.29 0.035 165);
+  --sidebar-primary: oklch(0.305 0.045 170);
+  --sidebar-primary-foreground: oklch(0.985 0.008 95);
+  --sidebar-accent: oklch(0.941 0.014 95);
+  --sidebar-accent-foreground: oklch(0.305 0.045 170);
+  --sidebar-border: oklch(0.905 0.015 95);
+  --sidebar-ring: oklch(0.705 0.14 35);
 }
 
-* {
-  border-color: var(--border);
-  outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+.dark {
+  --background: oklch(0.24 0.03 170);
+  --foreground: oklch(0.97 0.01 95);
+  --card: oklch(0.28 0.035 170);
+  --card-foreground: oklch(0.97 0.01 95);
+  --popover: oklch(0.28 0.035 170);
+  --popover-foreground: oklch(0.97 0.01 95);
+  --primary: oklch(0.705 0.14 35);
+  --primary-foreground: oklch(0.24 0.03 170);
+  --secondary: oklch(0.34 0.04 170);
+  --secondary-foreground: oklch(0.97 0.01 95);
+  --muted: oklch(0.34 0.04 170);
+  --muted-foreground: oklch(0.75 0.025 165);
+  --accent: oklch(0.705 0.14 35);
+  --accent-foreground: oklch(0.24 0.03 170);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.705 0.14 35);
+  --chart-1: oklch(0.705 0.14 35);
+  --chart-2: oklch(0.65 0.08 165);
+  --chart-3: oklch(0.75 0.1 85);
+  --chart-4: oklch(0.6 0.12 50);
+  --chart-5: oklch(0.55 0.08 165);
+  --sidebar: oklch(0.26 0.032 170);
+  --sidebar-foreground: oklch(0.97 0.01 95);
+  --sidebar-primary: oklch(0.705 0.14 35);
+  --sidebar-primary-foreground: oklch(0.24 0.03 170);
+  --sidebar-accent: oklch(0.34 0.04 170);
+  --sidebar-accent-foreground: oklch(0.97 0.01 95);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.705 0.14 35);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Geist Variable', sans-serif;
-}
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+  }
 
-html {
-  font-family: 'Geist Variable', sans-serif;
-}
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
-.auth-shell {
-  display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(440px, 1.1fr);
-  min-height: 100vh;
-  background: #f5f3ef;
-}
-
-.auth-brand-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(2rem, 6vw, 6rem);
-  color: #f9f7f2;
-  background: #172522;
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-brand-panel::after {
-  content: '';
-  position: absolute;
-  width: 28rem;
-  height: 28rem;
-  right: -12rem;
-  bottom: -10rem;
-  border: 1px solid rgba(240, 119, 86, 0.5);
-  border-radius: 50%;
-  box-shadow: 0 0 0 4rem rgba(240, 119, 86, 0.08), 0 0 0 8rem rgba(240, 119, 86, 0.05);
-}
-
-.brand-mark {
-  width: 3.25rem;
-  height: 3.25rem;
-  display: grid;
-  place-items: center;
-  color: #172522;
-  background: #f07c59;
-  font-size: 1.7rem;
-  font-weight: 800;
-  transform: rotate(-8deg);
-}
-
-.brand-mark span { transform: rotate(8deg); }
-.eyebrow, .form-kicker { margin: 0; color: #f07c59; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
-.eyebrow { display: flex; align-items: center; gap: 0.45rem; }
-.auth-brand-panel h1 { max-width: 28rem; margin: 1rem 0; font-size: clamp(2.4rem, 4vw, 4.5rem); line-height: 0.98; letter-spacing: -0.04em; }
-.brand-copy { max-width: 24rem; margin: 0; color: #b9c2bc; font-size: 1.05rem; line-height: 1.6; }
-.brand-note { display: flex; align-items: center; gap: 0.7rem; color: #dbe1db; font-size: 0.82rem; }
-.status-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #f07c59; box-shadow: 0 0 0 5px rgba(240, 124, 89, 0.15); }
-
-.auth-form-panel { display: grid; place-items: center; padding: 3rem clamp(1.5rem, 8vw, 8rem); background: #f5f3ef; }
-.auth-form-wrap { width: min(100%, 28rem); }
-.mobile-brand { display: none; }
-.form-kicker { margin-bottom: 1rem; }
-.auth-form-wrap h2 { margin: 0; color: #172522; font-size: clamp(1.8rem, 3vw, 2.7rem); line-height: 1.05; letter-spacing: -0.04em; }
-.form-intro { margin: 0.8rem 0 2.4rem; color: #68716d; }
-.auth-form { display: grid; gap: 1.25rem; }
-.name-fields { display: flex; gap: 1rem; }
-.field-label { display: block; color: #34403b; font-size: 0.76rem; font-weight: 700; }
-.field-with-icon { position: relative; }
-.field-with-icon > svg { position: absolute; left: 0.9rem; top: 50%; z-index: 1; color: #89928c; transform: translateY(-50%); }
-.field-with-icon input { padding-left: 2.7rem; border: 1px solid #d7d9d2; border-radius: 0.25rem; background: #fffdf9; }
-.field-with-icon input:focus { border-color: #f07c59; box-shadow: 0 0 0 3px rgba(240, 124, 89, 0.14); }
-.field-error, .form-error { margin: 0; color: #bd493d; font-size: 0.78rem; }
-.form-error { padding: 0.75rem 0.9rem; border-left: 3px solid #bd493d; background: #fbecea; }
-.auth-submit { width: 100%; height: 3rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.65rem; border: 0; border-radius: 0.25rem; color: #fffdf9; background: #172522; font-weight: 700; }
-.auth-submit:hover { background: #30443e; }
-.auth-switch { margin: 2rem 0 0; color: #68716d; font-size: 0.84rem; text-align: center; }
-.auth-switch a { color: #c95e43; font-weight: 700; text-decoration: none; }
-.auth-switch a:hover { text-decoration: underline; text-underline-offset: 0.2rem; }
-
-@media (max-width: 760px) {
-  .auth-shell { display: block; }
-  .auth-brand-panel { display: none; }
-  .auth-form-panel { min-height: 100vh; padding: 2rem 1.25rem; }
-  .mobile-brand { display: block; margin-bottom: 4rem; color: #172522; font-size: 1.45rem; font-weight: 800; letter-spacing: -0.06em; }
-  .brand-dot { color: #f07c59; }
-  .name-fields { flex-direction: column; gap: 1.25rem; }
+  html {
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  }
 }

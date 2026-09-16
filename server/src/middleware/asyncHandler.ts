@@ -1,11 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 
-type AsyncRouteHandler = (req: Request, res: Response) => Promise<Response>;
+// Handlers may use next() (e.g. resolveOrgContext) and may resolve to void —
+// anything the promise resolves to is discarded; errors flow to next().
+type AsyncRouteHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<unknown>;
 
 export function catchAsync (handler: AsyncRouteHandler) {
     return (req: Request, res: Response, next: NextFunction): void => {
-    
-        handler(req, res)
+        handler(req, res, next)
     .catch((error) => {
         next(error);
 

@@ -1,5 +1,5 @@
 import { AuthService } from '../features/auth/auth.service';
-import { AuthRepository } from '../features/auth/auth.repository';
+import { prisma } from '../config/database';
 
 import {
   hashRefreshToken,
@@ -9,22 +9,26 @@ import {
 
 jest.mock('../lib/jwt.util');
 
-describe('AuthService - refreshTokens', () => {
-  const mockAuthRepository = {
-    findRefreshToken: jest.fn(),
-    findUserById: jest.fn(),
-    revokeRefreshToken: jest.fn(),
-    createRefreshToken: jest.fn(),
-  };
+jest.mock('../config/database', () => ({
+  prisma: {
+    user: { findUnique: jest.fn() },
+    refreshToken: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
+    organizationMember: { findMany: jest.fn() },
+  },
+}));
 
+const prismaMock = prisma as unknown as {
+  user: { findUnique: jest.Mock };
+  refreshToken: { findUnique: jest.Mock; update: jest.Mock; create: jest.Mock };
+  organizationMember: { findMany: jest.Mock };
+};
+
+describe('AuthService - refreshTokens', () => {
   let authService: AuthService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    authService = new AuthService(
-      mockAuthRepository as unknown as AuthRepository,
-    );
+    authService = new AuthService();
   });
 
   const validRow = {
@@ -36,104 +40,92 @@ describe('AuthService - refreshTokens', () => {
   };
 
   describe('refreshTokens', () => {
-    it('rotates the token and returns new tokens when valid', async () => {
-      (hashRefreshToken as jest.Mock)
-        .mockReturnValue('hashed-refresh-token');
+    it('rotates the token and returns new tokens plus the user when valid', async () => {
+      (hashRefreshToken as jest.Mock).mockReturnValue('hashed-refresh-token');
 
-      mockAuthRepository.findRefreshToken
-        .mockResolvedValue(validRow);
-
-      mockAuthRepository.findUserById.mockResolvedValue({
+      prismaMock.refreshToken.findUnique.mockResolvedValue(validRow);
+      prismaMock.user.findUnique.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
       });
+      prismaMock.organizationMember.findMany.mockResolvedValue([]);
 
-      (generateAccessToken as jest.Mock)
-        .mockReturnValue('new.access.token');
+      (generateAccessToken as jest.Mock).mockReturnValue('new.access.token');
+      (generateRefreshToken as jest.Mock).mockReturnValue('new-raw-refresh-token');
 
-      (generateRefreshToken as jest.Mock)
-        .mockReturnValue('new-raw-refresh-token');
+      const result = await authService.refreshTokens('raw-refresh-token');
 
-      const result = await authService.refreshTokens(
-        'raw-refresh-token',
+      expect(prismaMock.refreshToken.update).toHaveBeenCalledWith({
+        where: { id: 'token-row-1' },
+        data: { revokedAt: expect.any(Date) },
+      });
+
+      expect(prismaMock.refreshToken.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 'user-1' }),
+        }),
       );
-
-      expect(mockAuthRepository.revokeRefreshToken)
-        .toHaveBeenCalledWith('token-row-1');
-
-      expect(mockAuthRepository.createRefreshToken)
-        .toHaveBeenCalledWith(
-          expect.objectContaining({
-            userId: 'user-1',
-          }),
-        );
 
       expect(result).toEqual({
         accessToken: 'new.access.token',
         refreshToken: 'new-raw-refresh-token',
+        user: {
+          id: 'user-1',
+          email: 'test@example.com',
+          firstName: 'Test',
+          lastName: 'User',
+          memberships: [],
+        },
       });
     });
 
     it('throws a 400 AppError when no refresh token is provided', async () => {
       await expect(
-        authService.refreshTokens(
-          undefined as unknown as string,
-        ),
+        authService.refreshTokens(undefined as unknown as string),
       ).rejects.toMatchObject({
         message: 'Refresh token is required',
         statusCode: 400,
       });
 
-      expect(mockAuthRepository.findRefreshToken)
-        .not.toHaveBeenCalled();
+      expect(prismaMock.refreshToken.findUnique).not.toHaveBeenCalled();
     });
 
     it('throws 401 when the token hash matches nothing', async () => {
-      (hashRefreshToken as jest.Mock)
-        .mockReturnValue('some-hash');
+      (hashRefreshToken as jest.Mock).mockReturnValue('some-hash');
 
-      mockAuthRepository.findRefreshToken
-        .mockResolvedValue(null);
+      prismaMock.refreshToken.findUnique.mockResolvedValue(null);
 
       await expect(
         authService.refreshTokens('fake-token'),
-      ).rejects.toMatchObject({
-        statusCode: 401,
-      });
+      ).rejects.toMatchObject({ statusCode: 401 });
     });
 
     it('throws 401 when the token was already revoked', async () => {
-      (hashRefreshToken as jest.Mock)
-        .mockReturnValue('hashed-refresh-token');
+      (hashRefreshToken as jest.Mock).mockReturnValue('hashed-refresh-token');
 
-      mockAuthRepository.findRefreshToken.mockResolvedValue({
+      prismaMock.refreshToken.findUnique.mockResolvedValue({
         ...validRow,
         revokedAt: new Date(),
       });
 
       await expect(
         authService.refreshTokens('raw-refresh-token'),
-      ).rejects.toMatchObject({
-        statusCode: 401,
-      });
+      ).rejects.toMatchObject({ statusCode: 401 });
     });
 
     it('throws 401 when the token has expired', async () => {
-      (hashRefreshToken as jest.Mock)
-        .mockReturnValue('hashed-refresh-token');
+      (hashRefreshToken as jest.Mock).mockReturnValue('hashed-refresh-token');
 
-      mockAuthRepository.findRefreshToken.mockResolvedValue({
+      prismaMock.refreshToken.findUnique.mockResolvedValue({
         ...validRow,
         expiresAt: new Date(Date.now() - 1000),
       });
 
       await expect(
         authService.refreshTokens('raw-refresh-token'),
-      ).rejects.toMatchObject({
-        statusCode: 401,
-      });
+      ).rejects.toMatchObject({ statusCode: 401 });
     });
   });
 });

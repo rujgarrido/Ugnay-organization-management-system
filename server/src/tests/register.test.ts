@@ -1,22 +1,25 @@
 import { AuthService } from '../features/auth/auth.service';
-import { AuthRepository } from '../features/auth/auth.repository';
 import bcrypt from 'bcrypt';
+import { prisma } from '../config/database';
 
 jest.mock('bcrypt');
 
-describe('AuthService - register', () => {
-  const mockAuthRepository = {
-    findUserByEmail: jest.fn(),
-    createUser: jest.fn(),
-  };
+jest.mock('../config/database', () => ({
+  prisma: {
+    user: { findUnique: jest.fn(), create: jest.fn() },
+  },
+}));
 
+const prismaMock = prisma as unknown as {
+  user: { findUnique: jest.Mock; create: jest.Mock };
+};
+
+describe('AuthService - register', () => {
   let authService: AuthService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    authService = new AuthService(
-      mockAuthRepository as unknown as AuthRepository,
-    );
+    authService = new AuthService();
   });
 
   const registerInput = {
@@ -29,11 +32,11 @@ describe('AuthService - register', () => {
 
   describe('register', () => {
     it('creates a new user and returns safe fields when the email is not taken', async () => {
-      mockAuthRepository.findUserByEmail.mockResolvedValue(null);
+      prismaMock.user.findUnique.mockResolvedValue(null);
 
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
 
-      mockAuthRepository.createUser.mockResolvedValue({
+      prismaMock.user.create.mockResolvedValue({
         id: 'user-1',
         firstName: 'Test',
         lastName: 'User',
@@ -43,8 +46,8 @@ describe('AuthService - register', () => {
 
       const result = await authService.register(registerInput);
 
-      expect(mockAuthRepository.findUserByEmail)
-        .toHaveBeenCalledWith('test@example.com');
+      expect(prismaMock.user.findUnique)
+        .toHaveBeenCalledWith({ where: { email: 'test@example.com' } });
 
       expect(bcrypt.hash)
         .toHaveBeenCalledWith('plainPassword123', 10);
@@ -54,13 +57,14 @@ describe('AuthService - register', () => {
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',
+        memberships: [],
       });
 
       expect(result).not.toHaveProperty('passwordHash');
     });
 
     it('throws a 409 AppError when the email already exists', async () => {
-      mockAuthRepository.findUserByEmail.mockResolvedValue({
+      prismaMock.user.findUnique.mockResolvedValue({
         id: 'existing-user',
       });
 
@@ -72,7 +76,7 @@ describe('AuthService - register', () => {
       });
 
       expect(bcrypt.hash).not.toHaveBeenCalled();
-      expect(mockAuthRepository.createUser).not.toHaveBeenCalled();
+      expect(prismaMock.user.create).not.toHaveBeenCalled();
     });
   });
 });

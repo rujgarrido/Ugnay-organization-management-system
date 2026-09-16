@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityFeed } from "@/features/dashboard/components/activity-feed";
 import { DashboardErrorState } from "@/features/dashboard/components/dashboard-error-state";
 import { DashboardSummaryCards } from "@/features/dashboard/components/dashboard-summary-cards";
@@ -31,20 +31,24 @@ export function DashboardPage() {
     setActivityPage(1);
   }, [orgId]);
 
+  // Queries are defined here to avoid re-rendering the ActivityFeed component when the parent component re-renders.
   const overviewQuery = useDashboardOverview(orgId);
   const activityQuery = useDashboardActivity(orgId, activityPage, activityEntityType);
 
+  // Handlers are defined here to avoid re-rendering the ActivityFeed component when the parent component re-renders.
   function handleEntityTypeChange(next: ActivityEntityTypeFilter) {
     setActivityEntityType(next);
     setActivityPage(1);
   }
 
+  // If the user is not a member of any organization, show the NoOrganizationState component.
   if (!membership) {
     return <NoOrganizationState />;
   }
-
+  // If the user is a member of an organization, show the dashboard.
   const { organization } = membership;
 
+  // The dashboard page is a grid layout with two main sections: the workspace overview and the recent activity feed.
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8">
       <header className="space-y-1">
@@ -71,7 +75,7 @@ export function DashboardPage() {
             />
           )}
         </section>
-
+        {/* The recent activity feed is displayed in a separate section, which is scrollable and paginated. It shows the most recent activity in the organization, filtered by entity type. */}
         <section aria-label="Recent activity">
           <ActivityFeed
             activity={activityQuery.data}

@@ -1,134 +1,90 @@
-﻿import type {
-  Project,
-  Task,
-  TaskPriority,
-  TaskStatus,
-} from "../types/project";
+import { api } from "@/lib/axios";
+import type { Project, Task, TaskStatus } from "../types/project";
 import type { ProjectFormInput } from "../schemas/project-schema";
 import type { TaskFormInput } from "../schemas/task-schema";
-import {
-  MOCK_LATENCY_MS,
-  MOCK_PROJECTS,
-  MOCK_TASKS,
-} from "./mock-projects-data";
 
 /**
- * TEMPORARY mock-backed data layer for the projects feature.
- *
- * Signatures match the future API contract so swapping the bodies for
- * real calls through `api` (`@/lib/axios`) requires no changes in the
- * query hooks, components, or types:
- *
- * - getProjects       -> GET   /organizations/:orgId/projects
- * - createProject     -> POST  /organizations/:orgId/projects
- * - getProject        -> GET   /organizations/:orgId/projects/:projectId
- * - updateProject     -> PATCH /organizations/:orgId/projects/:projectId
- * - archiveProject    -> PATCH /organizations/:orgId/projects/:projectId (soft)
- * - getTasks          -> GET   /organizations/:orgId/projects/:projectId/tasks?status=&assigneeId=&page=
- * - createTask        -> POST  /organizations/:orgId/projects/:projectId/tasks
- * - updateTaskStatus  -> PATCH /tasks/:taskId/status
+ * Real data layer for projects + tasks (US-3.1 / US-3.2 / US-3.3).
+ * Backend routes: /organizations/:orgId/projects[/:projectId[/tasks]].
+ * Every call is org-scoped and authorized server-side; archive is soft.
  */
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export async function getProjects(orgId: string): Promise<Project[]> {
+  const { data } = await api.get<{ data: { projects: Project[] } }>(
+    `/organizations/${orgId}/projects`,
+  );
+  return data.data.projects;
 }
 
-function findProject(projectId: string): Project {
-  const project = MOCK_PROJECTS.find((candidate) => candidate.id === projectId);
-
-  if (!project) {
-    throw new Error("Project not found.");
-  }
-
-  return project;
+export async function getProject(orgId: string, projectId: string): Promise<Project> {
+  const { data } = await api.get<{ data: { project: Project } }>(
+    `/organizations/${orgId}/projects/${projectId}`,
+  );
+  return data.data.project;
 }
 
-export async function getProjects(_orgId: string): Promise<Project[]> {
-  await delay(MOCK_LATENCY_MS);
-  return MOCK_PROJECTS.map((project) => ({ ...project }));
-}
-
-export async function getProject(_orgId: string, projectId: string): Promise<Project> {
-  await delay(MOCK_LATENCY_MS);
-  return { ...findProject(projectId) };
-}
-
-export async function createProject(_orgId: string, input: ProjectFormInput): Promise<Project> {
-  await delay(MOCK_LATENCY_MS);
-
-  const now = new Date().toISOString();
-  const project: Project = {
-    id: `prj-${Date.now()}`,
-    name: input.name,
-    description: input.description || null,
-    status: "active",
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  MOCK_PROJECTS.push(project);
-  return { ...project };
+export async function createProject(orgId: string, input: ProjectFormInput): Promise<Project> {
+  const { data } = await api.post<{ data: { project: Project } }>(
+    `/organizations/${orgId}/projects`,
+    { name: input.name, description: input.description },
+  );
+  return data.data.project;
 }
 
 export async function updateProject(
-  _orgId: string,
+  orgId: string,
   projectId: string,
   input: ProjectFormInput,
 ): Promise<Project> {
-  await delay(MOCK_LATENCY_MS);
-
-  const project = findProject(projectId);
-  project.name = input.name;
-  project.description = input.description || null;
-  project.updatedAt = new Date().toISOString();
-  return { ...project };
+  const { data } = await api.patch<{ data: { project: Project } }>(
+    `/organizations/${orgId}/projects/${projectId}`,
+    { name: input.name, description: input.description },
+  );
+  return data.data.project;
 }
 
-export async function archiveProject(_orgId: string, projectId: string): Promise<Project> {
-  await delay(MOCK_LATENCY_MS);
-
-  const project = findProject(projectId);
-  project.status = "archived";
-  project.updatedAt = new Date().toISOString();
-  return { ...project };
+/** Soft archive — the backend never deletes project rows. */
+export async function archiveProject(orgId: string, projectId: string): Promise<Project> {
+  const { data } = await api.delete<{ data: { project: Project } }>(
+    `/organizations/${orgId}/projects/${projectId}`,
+  );
+  return data.data.project;
 }
 
-export async function getTasks(projectId: string): Promise<Task[]> {
-  await delay(MOCK_LATENCY_MS);
-  return MOCK_TASKS.filter((task) => task.projectId === projectId).map((task) => ({ ...task }));
+export async function getTasks(orgId: string, projectId: string): Promise<Task[]> {
+  const { data } = await api.get<{ data: { tasks: Task[] } }>(
+    `/organizations/${orgId}/projects/${projectId}/tasks`,
+  );
+  return data.data.tasks;
 }
 
-export async function createTask(projectId: string, input: TaskFormInput): Promise<Task> {
-  await delay(MOCK_LATENCY_MS);
-
-  const task: Task = {
-    id: `task-${Date.now()}`,
-    projectId,
-    title: input.title,
-    description: input.description || null,
-    status: "backlog",
-    priority: input.priority,
-    assigneeName: input.assigneeName || null,
-    dueDate: input.dueDate ? new Date(input.dueDate).toISOString() : null,
-    createdAt: new Date().toISOString(),
-  };
-
-  MOCK_TASKS.push(task);
-  return { ...task };
+export async function createTask(
+  orgId: string,
+  projectId: string,
+  input: TaskFormInput,
+): Promise<Task> {
+  const { data } = await api.post<{ data: { task: Task } }>(
+    `/organizations/${orgId}/projects/${projectId}/tasks`,
+    {
+      title: input.title,
+      description: input.description,
+      priority: input.priority,
+      assigneeId: input.assigneeId || null,
+      dueDate: input.dueDate,
+    },
+  );
+  return data.data.task;
 }
 
-export async function updateTaskStatus(taskId: string, status: TaskStatus): Promise<Task> {
-  await delay(MOCK_LATENCY_MS);
-
-  const task = MOCK_TASKS.find((candidate) => candidate.id === taskId);
-
-  if (!task) {
-    throw new Error("Task not found.");
-  }
-
-  task.status = status;
-  return { ...task };
+export async function updateTaskStatus(
+  orgId: string,
+  projectId: string,
+  taskId: string,
+  status: TaskStatus,
+): Promise<Task> {
+  const { data } = await api.patch<{ data: { task: Task } }>(
+    `/organizations/${orgId}/projects/${projectId}/tasks/${taskId}/status`,
+    { status },
+  );
+  return data.data.task;
 }
-
-// Re-exported for the priority select in the task form.
-export type { TaskPriority };

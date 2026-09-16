@@ -80,10 +80,16 @@ model RefreshToken {
 // ORGANIZATION / RBAC
 // ─────────────────────────────────────────────────────────
 
+enum OrganizationStatus {
+  ACTIVE
+  ARCHIVED
+}
+
 model Organization {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String   @db.VarChar(255)
   description String?  @db.Text
+  status      OrganizationStatus @default(ACTIVE)
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 

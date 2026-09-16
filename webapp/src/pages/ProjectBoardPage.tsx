@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { PageError, PageLoading } from "@/components/page-state";
@@ -6,31 +6,31 @@ import { NoOrganizationState } from "@/components/no-organization-state";
 import { Button } from "@/components/ui/button";
 import { hasPermission, PERMISSIONS } from "@/features/organizations/types";
 import { useActiveOrganization } from "@/features/organizations/hooks/use-active-organization";
+import { useMembers } from "@/features/organizations/hooks/use-members";
 import { useTasks } from "@/features/projects/hooks/use-tasks";
 import { useUpdateTaskStatus } from "@/features/projects/hooks/task-mutations";
 import { TaskBoard } from "@/features/projects/components/board/task-board";
 import { NewTaskDialog } from "@/features/projects/components/board/new-task-dialog";
 import type { TaskStatus } from "@/features/projects/types/project";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export function ProjectBoardPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const membership = useActiveOrganization();
-  const tasksQuery = useTasks(projectId);
+  const orgId = membership?.organization.id ?? null;
+  const tasksQuery = useTasks(orgId, projectId);
+  const membersQuery = useMembers(orgId);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
-  const updateStatus = useUpdateTaskStatus(projectId ?? "");
+  const updateStatus = useUpdateTaskStatus(orgId ?? "", projectId ?? "");
 
-  const assigneeOptions = useMemo(() => {
-    const names = new Set<string>();
-
-    for (const task of tasksQuery.data ?? []) {
-      if (task.assigneeName) {
-        names.add(task.assigneeName);
-      }
-    }
-
-    return Array.from(names).sort();
-  }, [tasksQuery.data]);
+  const assigneeOptions = useMemo(
+    () =>
+      (membersQuery.data ?? [])
+        .filter((member) => member.isActive)
+        .map((member) => ({ id: member.id, name: member.name })),
+    [membersQuery.data],
+  );
 
   if (!membership) {
     return <NoOrganizationState />;
@@ -73,7 +73,7 @@ export function ProjectBoardPage() {
 
       {updateStatus.isError && (
         <p role="alert" className="rounded-lg border-l-3 border-destructive bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {updateStatus.error.message}
+          {getApiErrorMessage(updateStatus.error)}
         </p>
       )}
 
@@ -81,6 +81,7 @@ export function ProjectBoardPage() {
         <NewTaskDialog
           open={isNewTaskOpen}
           onClose={() => setIsNewTaskOpen(false)}
+          orgId={orgId ?? ""}
           projectId={projectId}
           assigneeOptions={assigneeOptions}
         />

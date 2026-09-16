@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,12 @@ interface DialogProps {
 /**
  * Lightweight accessible dialog: overlay click and Escape close it,
  * the panel receives focus when opened.
+ *
+ * Rendered through a portal to <body>: the app top bar uses
+ * `backdrop-blur`, which turns it into the containing block for fixed
+ * descendants — a dialog opened from the org switcher (inside that bar)
+ * would otherwise be positioned against the 56px header and clipped
+ * above the viewport.
  */
 export function Dialog({ open, onClose, title, description, children, className }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -33,7 +40,7 @@ export function Dialog({ open, onClose, title, description, children, className 
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-foreground/50" aria-hidden="true" onClick={onClose} />
       <div
@@ -58,6 +65,7 @@ export function Dialog({ open, onClose, title, description, children, className 
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

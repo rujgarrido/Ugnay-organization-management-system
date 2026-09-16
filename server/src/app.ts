@@ -10,7 +10,15 @@ import { routesNotFound } from './middleware/routesNotFound';
 import { authRoutes } from './features/auth/auth.routes';
 import { AuthController } from './features/auth/auth.controller';
 import { AuthService } from './features/auth/auth.service';
-import { AuthRepository } from './features/auth/auth.repository';
+import { organizationRoutes } from './features/organizations/organization.routes';
+import { OrganizationController } from './features/organizations/organization.controller';
+import { OrganizationService } from './features/organizations/organization.service';
+import { MemberService } from './features/organizations/member.service';
+import { usersRoutes } from './features/users/users.routes';
+import { projectRoutes } from './features/projects/project.routes';
+import { ProjectController } from './features/projects/project.controller';
+import { ProjectService } from './features/projects/project.service';
+import { TaskService } from './features/projects/task.service';
 export function createApp(): Express {
   const app = express();
   
@@ -48,12 +56,28 @@ export function createApp(): Express {
   });
 
   // Initialize the AuthController with its dependencies
-  const authController = new AuthController(new AuthService(new AuthRepository()));
+  const authController = new AuthController(new AuthService());
 
   // Authentication Routes
   app.use('/api/v1/auth', authRoutes(authController));
+  console.log('Auth routes registered at /api/v1/auth');
 
-console.log('Auth routes registered at /api/v1/auth');
+  // Organization Routes (org lifecycle, members, dashboard, activity)
+  const organizationController = new OrganizationController(
+    new OrganizationService(),
+    new MemberService(),
+  );
+  app.use('/api/v1/organizations', organizationRoutes(organizationController));
+  console.log('Organization routes registered at /api/v1/organizations');
+
+  // User profile routes (US-1.7)
+  app.use('/api/v1/users', usersRoutes());
+  console.log('User routes registered at /api/v1/users');
+
+  // Project + task routes (US-3.1 / US-3.2 / US-3.3)
+  const projectController = new ProjectController(new ProjectService(), new TaskService());
+  app.use('/api/v1/organizations', projectRoutes(projectController));
+  console.log('Project routes registered at /api/v1/organizations/:orgId/projects');
 
   // 404 handler for unmatched routes
   app.use(routesNotFound);
