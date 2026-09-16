@@ -19,6 +19,9 @@ import { projectRoutes } from './features/projects/project.routes';
 import { ProjectController } from './features/projects/project.controller';
 import { ProjectService } from './features/projects/project.service';
 import { TaskService } from './features/projects/task.service';
+import { proposalRoutes } from './features/proposals/proposal.routes';
+import { ProposalController } from './features/proposals/proposal.controller';
+import { ProposalService } from './features/proposals/proposal.service';
 export function createApp(): Express {
   const app = express();
   
@@ -78,6 +81,11 @@ export function createApp(): Express {
   const projectController = new ProjectController(new ProjectService(), new TaskService());
   app.use('/api/v1/organizations', projectRoutes(projectController));
   console.log('Project routes registered at /api/v1/organizations/:orgId/projects');
+
+  // Proposal + signature routes (US-5.1 / US-5.2 / US-5.3)
+  const proposalController = new ProposalController(new ProposalService());
+  app.use('/api/v1/organizations', proposalRoutes(proposalController));
+  console.log('Proposal routes registered at /api/v1/organizations/:orgId/proposals');
 
   // 404 handler for unmatched routes
   app.use(routesNotFound);

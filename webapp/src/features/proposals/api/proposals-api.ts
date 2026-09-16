@@ -1,135 +1,86 @@
-﻿import type {
+import { api } from "@/lib/axios";
+import type {
   Proposal,
   ProposalSignature,
   ProposalStatus,
 } from "../types/proposal";
-import { PROPOSAL_TRANSITIONS } from "../types/proposal";
 import type { ProposalFormInput } from "../schemas/proposal-schema";
 import type { SignatureFormInput } from "../schemas/signature-schema";
-import {
-  MOCK_LATENCY_MS,
-  MOCK_PROPOSALS,
-  MOCK_SIGNATURES,
-} from "./mock-proposals-data";
 
 /**
- * TEMPORARY mock-backed data layer for the proposals feature.
- *
- * Signatures match the future API contract so swapping the bodies for
- * real calls through `api` (`@/lib/axios`) requires no changes in the
- * query hooks, components, or types:
- *
- * - getProposals         -> GET   /organizations/:orgId/proposals
- * - createProposal       -> POST  /organizations/:orgId/proposals
- * - getProposal          -> GET   /organizations/:orgId/proposals/:proposalId
- * - updateProposalStatus -> PATCH /proposals/:proposalId/status (assertValidTransition)
- * - getSignatures        -> GET   /proposals/:proposalId/signatures
- * - addSignature         -> POST  /proposals/:proposalId/signatures
- * - completeSignature    -> PATCH /proposals/:proposalId/signatures/:signatureId
+ * Real data layer for proposals + signatures (US-5.1 / US-5.2 / US-5.3).
+ * Backend routes: /organizations/:orgId/proposals[...]. Every call is
+ * org-scoped and authorized server-side; the status state machine
+ * (assertValidTransition + per-step permissions) is enforced by the service,
+ * so this layer simply surfaces its 409/403 errors.
  */
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export async function getProposals(orgId: string): Promise<Proposal[]> {
+  const { data } = await api.get<{ data: { proposals: Proposal[] } }>(
+    `/organizations/${orgId}/proposals`,
+  );
+  return data.data.proposals;
 }
 
-function findProposal(proposalId: string): Proposal {
-  const proposal = MOCK_PROPOSALS.find((candidate) => candidate.id === proposalId);
-
-  if (!proposal) {
-    throw new Error("Proposal not found.");
-  }
-
-  return proposal;
+export async function getProposal(orgId: string, proposalId: string): Promise<Proposal> {
+  const { data } = await api.get<{ data: { proposal: Proposal } }>(
+    `/organizations/${orgId}/proposals/${proposalId}`,
+  );
+  return data.data.proposal;
 }
 
-export async function getProposals(_orgId: string): Promise<Proposal[]> {
-  await delay(MOCK_LATENCY_MS);
-  return MOCK_PROPOSALS.map((proposal) => ({ ...proposal }));
-}
-
-export async function getProposal(_orgId: string, proposalId: string): Promise<Proposal> {
-  await delay(MOCK_LATENCY_MS);
-  return { ...findProposal(proposalId) };
-}
-
-export async function createProposal(_orgId: string, input: ProposalFormInput): Promise<Proposal> {
-  await delay(MOCK_LATENCY_MS);
-
-  const now = new Date().toISOString();
-  const proposal: Proposal = {
-    id: `prp-${Date.now()}`,
-    title: input.title,
-    description: input.description || null,
-    status: "draft",
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  MOCK_PROPOSALS.push(proposal);
-  return { ...proposal };
+export async function createProposal(
+  orgId: string,
+  input: ProposalFormInput,
+): Promise<Proposal> {
+  const { data } = await api.post<{ data: { proposal: Proposal } }>(
+    `/organizations/${orgId}/proposals`,
+    { title: input.title, description: input.description },
+  );
+  return data.data.proposal;
 }
 
 export async function updateProposalStatus(
-  _orgId: string,
+  orgId: string,
   proposalId: string,
   status: ProposalStatus,
 ): Promise<Proposal> {
-  await delay(MOCK_LATENCY_MS);
-
-  const proposal = findProposal(proposalId);
-  const legalTransitions = PROPOSAL_TRANSITIONS[proposal.status];
-
-  if (!legalTransitions.includes(status)) {
-    throw new Error(`Cannot move a ${proposal.status.replace("_", " ")} proposal to ${status.replace("_", " ")}.`);
-  }
-
-  proposal.status = status;
-  proposal.updatedAt = new Date().toISOString();
-  return { ...proposal };
+  const { data } = await api.patch<{ data: { proposal: Proposal } }>(
+    `/organizations/${orgId}/proposals/${proposalId}/status`,
+    { status },
+  );
+  return data.data.proposal;
 }
 
-export async function getSignatures(proposalId: string): Promise<ProposalSignature[]> {
-  await delay(MOCK_LATENCY_MS);
-  return MOCK_SIGNATURES.filter((signature) => signature.proposalId === proposalId).map((signature) => ({
-    ...signature,
-  }));
+export async function getSignatures(
+  orgId: string,
+  proposalId: string,
+): Promise<ProposalSignature[]> {
+  const { data } = await api.get<{ data: { signatures: ProposalSignature[] } }>(
+    `/organizations/${orgId}/proposals/${proposalId}/signatures`,
+  );
+  return data.data.signatures;
 }
 
 export async function addSignature(
+  orgId: string,
   proposalId: string,
   input: SignatureFormInput,
 ): Promise<ProposalSignature> {
-  await delay(MOCK_LATENCY_MS);
-
-  findProposal(proposalId);
-
-  const signature: ProposalSignature = {
-    id: `sig-${Date.now()}`,
-    proposalId,
-    signatoryName: input.signatoryName,
-    role: input.role,
-    isComplete: false,
-    createdAt: new Date().toISOString(),
-  };
-
-  MOCK_SIGNATURES.push(signature);
-  return { ...signature };
+  const { data } = await api.post<{ data: { signature: ProposalSignature } }>(
+    `/organizations/${orgId}/proposals/${proposalId}/signatures`,
+    { signatoryName: input.signatoryName, role: input.role },
+  );
+  return data.data.signature;
 }
 
 export async function completeSignature(
+  orgId: string,
   proposalId: string,
   signatureId: string,
 ): Promise<ProposalSignature> {
-  await delay(MOCK_LATENCY_MS);
-
-  const signature = MOCK_SIGNATURES.find(
-    (candidate) => candidate.id === signatureId && candidate.proposalId === proposalId,
+  const { data } = await api.patch<{ data: { signature: ProposalSignature } }>(
+    `/organizations/${orgId}/proposals/${proposalId}/signatures/${signatureId}`,
   );
-
-  if (!signature) {
-    throw new Error("Signature not found.");
-  }
-
-  signature.isComplete = true;
-  return { ...signature };
+  return data.data.signature;
 }

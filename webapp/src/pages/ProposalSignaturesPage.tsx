@@ -1,4 +1,4 @@
-﻿import { useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "react-router-dom";
 import { CheckCircle2, CircleDashed } from "lucide-react";
@@ -18,9 +18,12 @@ import { getApiErrorMessage } from "@/lib/api-error";
 export function ProposalSignaturesPage() {
   const { proposalId } = useParams<{ proposalId: string }>();
   const membership = useActiveOrganization();
-  const signaturesQuery = useSignatures(proposalId);
-  const addSignature = useAddSignature(proposalId ?? "");
-  const completeSignature = useCompleteSignature(proposalId ?? "");
+  const signaturesQuery = useSignatures(membership?.organization.id ?? null, proposalId);
+  const addSignature = useAddSignature(membership?.organization.id ?? "", proposalId ?? "");
+  const completeSignature = useCompleteSignature(
+    membership?.organization.id ?? "",
+    proposalId ?? "",
+  );
 
   const form = useForm<SignatureFormInput>({
     resolver: zodResolver(signatureFormSchema),
