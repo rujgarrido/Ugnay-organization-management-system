@@ -1,14 +1,13 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { RouterProvider } from 'react-router-dom';
-import { queryClient } from './lib/queryClient';
-import { router } from './routes';
+import { AppProviders } from "@/app/providers";
+import { AppRouter } from "@/app/router";
+import { AppErrorBoundary } from "@/components/app-error-boundary";
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <AppProviders>
+        <AppRouter />
+      </AppProviders>
+    </AppErrorBoundary>
   );
 }

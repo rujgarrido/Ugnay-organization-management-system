@@ -15,7 +15,7 @@ export function validate(schema: ZodSchema) {
   return (req: Request, _res: Response, next: NextFunction): void => {
    
     const result = schema.safeParse(req.body);
-    console.log('Validation result:', result);
+
     if (!result.success) {
       next(result.error);
       return;

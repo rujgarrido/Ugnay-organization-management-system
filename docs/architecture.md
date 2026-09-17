@@ -22,7 +22,7 @@ splitting into microservices.
 
 ```
 server/src/
-├── modules/
+├── features/
 │   ├── auth/            — register, login, refresh, logout
 │   ├── organizations/    — org CRUD, members, positions, committees
 │   ├── projects/          — project CRUD
@@ -30,10 +30,13 @@ server/src/
 │   ├── proposals/           — proposal workflow + signatures (the differentiator)
 │   └── activity/             — append-only activity log + dashboard
 │
-├── shared/    — error classes (errors.ts), cross-module helpers
+├── lib/    — error classes (errors.ts), cross-module helpers
 ├── config/    — env.ts, db.ts (single PrismaClient instance)
 ├── middleware/ — authenticate, resolveOrgContext, requirePermission, errorHandler
-└── app.ts
+├──tests
+├──app.ts
+└── index.ts
+
 ```
 
 **Why `organizations` absorbs Members/Positions/Committees rather than each

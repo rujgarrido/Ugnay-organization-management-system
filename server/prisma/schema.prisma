@@ -80,10 +80,16 @@ model RefreshToken {
 // ORGANIZATION / RBAC
 // ─────────────────────────────────────────────────────────
 
+enum OrganizationStatus {
+  ACTIVE
+  ARCHIVED
+}
+
 model Organization {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String   @db.VarChar(255)
   description String?  @db.Text
+  status      OrganizationStatus @default(ACTIVE)
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 
@@ -266,15 +272,16 @@ model Task {
 // the enum alone to prevent illegal transitions (e.g. DRAFT -> COMPLETED).
 // ─────────────────────────────────────────────────────────
 
+// Aligned with the UI contract (webapp PROPOSAL_STATUSES) — the original
+// 8-value workflow enum was never used (no routes shipped), so it collapsed
+// to the 6 statuses the spec (US-5.2) defines.
 enum ProposalStatus {
   DRAFT
   SUBMITTED
-  AWAITING_SIGNATURES
-  SUBMITTED_TO_OFFICE
-  COMPLETED
-  NEEDS_REVISION
+  UNDER_REVIEW
+  APPROVED
   REJECTED
-  CANCELLED
+  COMPLETED
 }
 
 model Proposal {
@@ -313,6 +320,7 @@ model ProposalSignature {
   signatoryRole String          @db.VarChar(100)
   status        SignatureStatus @default(PENDING)
   completedAt   DateTime?       @db.Timestamptz(3)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
 
   proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
