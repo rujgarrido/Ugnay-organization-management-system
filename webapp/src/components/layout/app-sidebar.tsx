@@ -36,14 +36,16 @@ const NAV_GROUPS: NavGroup[] = [
 interface AppSidebarProps {
   /** Called after a navigation, so the mobile drawer can close itself. */
   onNavigate?: () => void;
+  /** Desktop icon-rail mode: icons only, labels hidden with tooltips. */
+  collapsed?: boolean;
 }
 
-export function AppSidebar({ onNavigate }: AppSidebarProps) {
+export function AppSidebar({ onNavigate, collapsed = false }: AppSidebarProps) {
   return (
     <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-4 overflow-y-auto p-3">
       {NAV_GROUPS.map((group, groupIndex) => (
         <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-1">
-          {group.label && (
+          {group.label && !collapsed && (
             <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {group.label}
             </p>
@@ -53,9 +55,12 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
               key={to}
               to={to}
               onClick={onNavigate}
+              title={collapsed ? label : undefined}
+              aria-label={collapsed ? label : undefined}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+                  collapsed && "justify-center px-0",
                   isActive
                     ? "bg-secondary text-secondary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -63,7 +68,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
               }
             >
               <Icon className="size-4 shrink-0" aria-hidden="true" />
-              {label}
+              {!collapsed && label}
             </NavLink>
           ))}
         </div>

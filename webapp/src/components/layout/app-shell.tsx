@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { AppSidebar } from "./app-sidebar";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
@@ -9,11 +9,13 @@ import { useAuth } from "@/features/auth/useAuth";
 import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 import { getInitials, cn } from "@/lib/utils";
 
-function BrandMark() {
+const SIDEBAR_STORAGE_KEY = "ugnay:sidebar-collapsed";
+
+function BrandMark({ collapsed = false }: { collapsed?: boolean }) {
   return (
-    <div className="flex items-center gap-2 px-1">
-      <UgnayMark className="size-7" />
-      <span className="text-sm font-semibold tracking-tight">ugnay</span>
+    <div className={cn("flex items-center gap-2 px-1", collapsed && "justify-center px-0")}>
+      <UgnayMark className="size-7 shrink-0" />
+      {!collapsed && <span className="text-sm font-semibold tracking-tight">ugnay</span>}
     </div>
   );
 }
@@ -27,6 +29,26 @@ export function AppShell() {
   const { user } = useAuth();
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  // Persist the desktop collapse preference across reloads.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isSidebarCollapsed));
+    } catch {
+      // Private-mode storage failures must not break the shell.
+    }
+  }, [isSidebarCollapsed]);
+
+  function toggleSidebar() {
+    setIsSidebarCollapsed((collapsed) => !collapsed);
+  }
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => {
@@ -50,24 +72,68 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r bg-card lg:flex">
-        <div className="flex h-14 items-center border-b px-4">
-          <BrandMark />
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r bg-card transition-[width] duration-200 lg:flex",
+          isSidebarCollapsed ? "w-16" : "w-64",
+        )}
+      >
+        <div
+          className={cn(
+            "relative flex h-14 items-center border-b px-4",
+            isSidebarCollapsed
+              ? "group/sidebar-toggle justify-center px-2"
+              : "justify-between gap-2",
+          )}
+        >
+          <span
+            className={cn(
+              "min-w-0 transition-opacity",
+              // Only the minimized rail swaps the mark for the toggle on hover;
+              // when expanded the mark stays put and the toggle sits at the edge.
+              isSidebarCollapsed &&
+                "group-hover/sidebar-toggle:opacity-0 group-focus-within/sidebar-toggle:opacity-0",
+            )}
+          >
+            <BrandMark collapsed={isSidebarCollapsed} />
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-expanded={!isSidebarCollapsed}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={toggleSidebar}
+            className={cn(
+              isSidebarCollapsed
+                ? "absolute inset-0 m-auto opacity-0 transition-opacity group-hover/sidebar-toggle:opacity-100 focus-visible:opacity-100"
+                : "shrink-0",
+            )}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen aria-hidden="true" />
+            ) : (
+              <PanelLeftClose aria-hidden="true" />
+            )}
+          </Button>
         </div>
-        <AppSidebar />
+        <AppSidebar collapsed={isSidebarCollapsed} />
         {user && (
           <div className="border-t p-3">
-            <div className="flex items-center gap-2.5 px-1">
+            <div className={cn("flex items-center gap-2.5 px-1", isSidebarCollapsed && "justify-center px-0")}>
               <span
                 className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground"
                 aria-hidden="true"
+                title={isSidebarCollapsed ? displayName : undefined}
               >
                 {getInitials(displayName)}
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{displayName}</p>
-                <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{displayName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -102,7 +168,7 @@ export function AppShell() {
         <AppSidebar onNavigate={() => setIsMobileNavOpen(false)} />
       </aside>
 
-      <div className="flex min-h-screen flex-col lg:pl-64">
+      <div className={cn("flex min-h-screen flex-col", isSidebarCollapsed ? "lg:pl-16" : "lg:pl-64")}>
         <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
           <Button
             variant="ghost"
@@ -116,9 +182,13 @@ export function AppShell() {
             <Menu aria-hidden="true" />
           </Button>
 
-          <OrgSwitcher />
+          <div className="min-w-0 flex-1">
+            <OrgSwitcher />
+          </div>
 
-          <UserMenu />
+          <div className="ml-auto flex shrink-0 items-center">
+            <UserMenu />
+          </div>
 
         </header>
 
