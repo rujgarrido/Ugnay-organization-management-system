@@ -1,15 +1,15 @@
 
 # Ugnay
 
-A  full-stack task and project management system built with a Modular Monolith
-architecture, demonstrating a real-world Agile/Scrum-inspired SDLC.
+A  full-stack multi-tenant organization and project management system built with a Modular Monolith
+architecture, demonstrating a real-world Agile-inspired SDLC.
 
 
 ## Stack
 
-- **Frontend:** React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form, Zod, Axios, DnD Kit, Recharts
-- **Backend:** Node.js, TypeScript, Express, PostgreSQL, Prisma, JWT, bcrypt, Zod, Swagger/OpenAPI, Jest, Supertest
-- **Infra:** Docker, Docker Compose, GitHub Actions
+- **Frontend:** React, Vite, Tailwind CSS, Shadcn/ui
+- **Backend:** Node.js, TypeScript, Express, PostgreSQL, Prisma, JWT, Jest
+- **Infra:** Docker, GitHub Actions
 
 ## Repository layout
 
@@ -38,7 +38,7 @@ Ugnay/
 
 ```bash
 git clone <your-repo-url>
-cd TaskFlow
+cd Ugnay
 cp .env.example .env
 cp server/.env.example server/.env
 cp webapp/.env.example webapp/.env
@@ -77,11 +77,13 @@ Visit `http://localhost:5173`.
 
 ## Documentation
 
-See `docs/` for requirements, architecture, database design, API reference, and
-deployment notes as they're written.
+See `docs/`
 
 ## License
 
-See `LICENSE`.
-# Ugnay
+MIT License
+
+Developed by: Rujonht Garrido
+
+Copyright (c) 2026 Ugnay
 
