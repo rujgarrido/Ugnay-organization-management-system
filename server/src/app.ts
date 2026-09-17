@@ -47,11 +47,11 @@ export function createApp(): Express {
   app.use(cookieParser());
   
   //strip pino-http headers to avoid logging sensitive information
-//   app.use(pinoHttp({ logger, serializers: {
-//     req: (req) => ({ method: req.method, url: req.url }), // strip headers
-//     res: (res) => ({ statusCode: res.statusCode }),
-//   },
-//  }));
+  app.use(pinoHttp({ logger, serializers: {
+    req: (req) => ({ method: req.method, url: req.url }), // strip headers
+    res: (res) => ({ statusCode: res.statusCode }),
+  },
+ }));
 
   // Health check — used for local verification and platform (Render) health probes.
   app.get('/health', (_req, res) => {
