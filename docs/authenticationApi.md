@@ -118,5 +118,5 @@ No body needed. Relies on the `refreshToken` cookie.
 
 ## Notes / things to double check while testing
 
-- If a request unexpectedly returns `500`, check the **server terminal logs**, not just the Postman response — `errorHandler`'s `logger.error(...)` call logs the real error/stack trace server-side; the response body only shows a generic message in production mode.
+- If a request unexpectedly returns `500`, check the **server terminal logs**, not just the Postman response — `pino-http` logs the request with the original error attached by `errorHandler` (`message` + `stack`); the response body only shows a generic message in production mode.
 - Cross-domain (`sameSite: 'none'`, `secure: true`) cookie behavior only fully matters once testing against the deployed Vercel + Render URLs — local `http://localhost` testing may behave more permissively than production will.
