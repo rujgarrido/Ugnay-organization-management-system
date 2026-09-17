@@ -5,6 +5,7 @@ import pinoHttp from 'pino-http';
 import { env } from './config/env';
 import { logger } from './lib/logger';
 import  cookieParser from 'cookie-parser';
+import type { AuthenticatedRequest } from './middleware/auth.middleware';
 import { errorHandler } from './middleware/errorHandler';
 import { routesNotFound } from './middleware/routesNotFound';
 import { authRoutes } from './features/auth/auth.routes';
@@ -46,12 +47,38 @@ export function createApp(): Express {
 
   app.use(cookieParser());
   
-  //strip pino-http headers to avoid logging sensitive information
-  app.use(pinoHttp({ logger, serializers: {
-    req: (req) => ({ method: req.method, url: req.url }), // strip headers
-    res: (res) => ({ statusCode: res.statusCode }),
-  },
- }));
+  // Strip pino-http req/res serializers down to non-sensitive fields, keep the
+  // request id (set by pino-http) for correlation, and let the errorHandler
+  // hand us the original error so 5xx logs carry a real message and stack
+  // instead of pino-http's synthetic "failed with status code 500" error.
+  app.use(pinoHttp({
+    logger,
+    serializers: {
+      req: (req) => ({ id: req.id, method: req.method, url: req.url }), // strip headers
+      res: (res) => ({ statusCode: res.statusCode }),
+    },
+    // 4xx is caller behaviour (warn); 5xx or an errored response is ours (error).
+    customLogLevel: (_req, res) => {
+      if (res.statusCode >= 500) {
+        return 'error';
+      }
+      if (res.statusCode >= 400) {
+        return 'warn';
+      }
+      return 'info';
+    },
+    // Health probes poll constantly and would drown the access log.
+    autoLogging: { ignore: (req) => req.url === '/health' },
+    // Low-cardinality fields that make a single request greppable.
+    customProps: (req) => {
+      const request = req as AuthenticatedRequest;
+      return {
+        reqId: request.id,
+        userId: request.user?.id,
+        organizationId: request.orgContext?.organizationId,
+      };
+    },
+  }));
 
   // Health check — used for local verification and platform (Render) health probes.
   app.get('/health', (_req, res) => {
