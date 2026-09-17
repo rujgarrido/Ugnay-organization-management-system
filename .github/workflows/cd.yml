@@ -1,0 +1,43 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]       # Must match the `name:` of your CI file
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:        # Optional: Allows you to manually trigger a deploy from the Actions tab
+
+jobs:
+  deploy:
+    name: Deploy — Migrate DB + Render + Vercel
+    runs-on: ubuntu-latest
+    
+    # Only run if CI succeeded AND the branch is main (or if manually triggered)
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+    
+    defaults:
+      run:
+        working-directory: server
+        
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Server Dependencies
+        run: npm ci
+
+      - name: 1. Apply Prisma migrations to Neon
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL }} # Uses Neon's direct connection string
+
+      - name: 2. Deploy Backend to Render
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+
+      - name: 3. Deploy Frontend to Vercel
+        run: curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
