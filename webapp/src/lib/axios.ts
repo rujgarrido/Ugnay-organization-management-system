@@ -1,30 +1,57 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { getAccessToken, setAccessToken, clearAccessToken } from "./auth-token";
+import { getCsrfToken, setCsrfToken } from "./csrf-token";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api/v1";
 
-function getCookie(name: string): string | null {
-  const prefix = `${name}=`;
-  return document.cookie.split("; ").find((cookie) => cookie.startsWith(prefix))?.slice(prefix.length) ?? null;
-}
+const CSRF_ENDPOINT = "/auth/csrf";
+const CSRF_HEADER = "X-CSRF-Token";
+const UNSAFE_METHODS = ["post", "put", "patch", "delete"];
+
+// The only 403 messages worth refreshing the token for — mirrors the server's
+// double-submit check (server/src/middleware/csrf.ts). A permission 403 must
+// not be retried.
+const CSRF_ERROR_MESSAGES = ["CSRF token is required", "Invalid CSRF token"];
 
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // sends the httpOnly refresh-token cookie automatically
 });
 
-// Attach the current access token to every outgoing request.
+// Attach the access token to every request, plus the CSRF token to unsafe ones.
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase() ?? "")) {
-    const csrfToken = getCookie("csrfToken");
-    if (csrfToken) config.headers["X-CSRF-Token"] = csrfToken;
+  if (UNSAFE_METHODS.includes(config.method?.toLowerCase() ?? "")) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) config.headers[CSRF_HEADER] = csrfToken;
   }
   return config;
 });
+
+// /auth/csrf is the only endpoint that issues a token, so it is the single place
+// that feeds the in-memory store. Deduped: concurrent 403s share one fetch.
+let csrfFetch: Promise<string | null> | null = null;
+
+/** Fetches a fresh CSRF token. Never throws — callers fall back to the old one. */
+export function refreshCsrfToken(): Promise<string | null> {
+  if (!csrfFetch) {
+    csrfFetch = api
+      .get<{ data: { csrfToken: string } }>(CSRF_ENDPOINT)
+      .then(({ data }) => {
+        setCsrfToken(data.data.csrfToken);
+        return data.data.csrfToken;
+      })
+      .catch(() => null)
+      .finally(() => {
+        csrfFetch = null;
+      });
+  }
+
+  return csrfFetch;
+}
 
 // If two requests 401 at the same moment, we only want ONE refresh call —
 // the second request should wait for the first refresh to finish, not
@@ -41,14 +68,38 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
+  (response) => {
+    // Any /auth/csrf response carries the freshest token — including the one
+    // the auth bootstrap fetches.
+    const body = response.data as { data?: { csrfToken?: string } } | undefined;
+    if (response.config.url?.includes(CSRF_ENDPOINT) && body?.data?.csrfToken) {
+      setCsrfToken(body.data.csrfToken);
+    }
+
+    return response;
+  },
+  async (error: AxiosError<{ message?: string }>) => {
     const originalRequest = error.config as (InternalAxiosRequestConfig & {
       _retry?: boolean;
+      _csrfRetry?: boolean;
     }) | undefined;
 
     if (!originalRequest) {
       return Promise.reject(error);
+    }
+
+    // A rejected double-submit pair means one side rotated (login re-issues the
+    // cookie). Refresh the token and replay the request exactly once.
+    if (
+      error.response?.status === 403 &&
+      !originalRequest._csrfRetry &&
+      CSRF_ERROR_MESSAGES.includes(error.response.data?.message ?? "")
+    ) {
+      originalRequest._csrfRetry = true;
+
+      await refreshCsrfToken();
+
+      return api(originalRequest);
     }
 
     const isAuthEndpoint = originalRequest.url?.includes("/auth/");
