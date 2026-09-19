@@ -26,6 +26,11 @@ import { ProposalService } from './features/proposals/proposal.service';
 export function createApp(): Express {
   const app = express();
   
+  // Render (and the Vercel rewrite) terminate TLS in front of Express, so the
+  // real client IP and protocol arrive in X-Forwarded-* — rate limiting and the
+  // `secure` cookie check both depend on Express trusting that one hop.
+  app.set('trust proxy', 1);
+
   // helmet and cors should be registered before any other middleware to ensure security and cross-origin requests are handled properly
   app.use(helmet());
   

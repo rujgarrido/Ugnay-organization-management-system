@@ -35,8 +35,8 @@ As a new user, I want to register with email/password, so that I have an account
 **US-1.3 — Login issues both tokens correctly**
 As a registered user, I want to log in and stay logged in, so that I don't re-auth every 15 minutes.
 - [x] `POST /auth/login` returns access JWT (userId only, 15 min) in response body
-- [x] Refresh token issued as httpOnly, Secure, SameSite=None cookie; hashed row written to `RefreshToken`
-- [ ] **Test cross-domain cookie delivery against your actual deployed Vercel+Render URLs right now** — this is Gap #4. If it fails, switch to the in-memory fallback today.
+- [x] Refresh token issued as HttpOnly, Secure (prod), SameSite=Lax host-only cookie; hashed row written to `RefreshToken`
+- [x] **Cross-domain cookie delivery (Gap #4)** — resolved by the same-origin proxy: Vite `server.proxy` in dev, `webapp/vercel.json` rewrite in prod. The browser only ever sees one origin, so cookies are first-party and `SameSite=None` is no longer needed.
 
 **US-1.4 — Refresh and logout**
 As a logged-in user, I want my session to renew silently and end cleanly on logout.

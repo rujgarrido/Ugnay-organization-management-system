@@ -1,9 +1,13 @@
 # Ugnay — API Reference
 
-> Base path: `/api/v1`. Envelope: `{ status, message, data }` (errors use the
-> same shape; Zod failures return 400 with `data: zod.flatten()`).
+> Base path: `/api/v1`, always called **same-origin** (relative path). In dev the
+> Vite dev server proxies `/api/*` to the local backend; in production the Vercel
+> rewrite in `webapp/vercel.json` forwards `/api/*` to the Render backend. No API
+> host is ever hardcoded in app code.
 > Auth: `Authorization: Bearer <accessToken>` + `X-CSRF-Token` header on
-> unsafe methods (double-submit against the readable `csrfToken` cookie).
+> every unsafe method. Both cookies are `HttpOnly`, `SameSite=Lax`, host-only
+> (no `Domain`), so the CSRF token is read from the `/auth/csrf` response body —
+> never from `document.cookie`.
 
 ## Health
 `GET /health` -> `{ status: 'ok' }`
