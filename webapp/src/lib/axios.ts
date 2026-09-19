@@ -17,7 +17,7 @@ const UNSAFE_METHODS = ["post", "put", "patch", "delete"];
 const CSRF_ERROR_MESSAGES = ["CSRF token is required", "Invalid CSRF token"];
 
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: '/api/v1',
   withCredentials: true, // sends the httpOnly refresh-token cookie automatically
 });
 
