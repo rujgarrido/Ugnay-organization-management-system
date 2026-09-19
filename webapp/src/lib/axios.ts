@@ -2,7 +2,10 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { getAccessToken, setAccessToken, clearAccessToken } from "./auth-token";
 import { getCsrfToken, setCsrfToken } from "./csrf-token";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api/v1";
+// Relative on purpose: the browser only ever talks to its own origin. Vite
+// proxies /api/* in dev (vite.config.ts) and Vercel rewrites it in prod
+// (vercel.json), so no API host is ever hardcoded here.
+const API_URL = "/api/v1";
 
 const CSRF_ENDPOINT = "/auth/csrf";
 const CSRF_HEADER = "X-CSRF-Token";

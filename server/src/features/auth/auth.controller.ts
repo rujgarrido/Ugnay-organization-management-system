@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { REFRESH_TOKEN_TTL_MS } from '../../config/constants';
-import { env } from '../../config/env';
+import { clearedCookieOptions, refreshTokenCookieOptions } from '../../config/cookies';
 import { issueCsrfToken, setCsrfCookie } from '../../middleware/csrf';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
@@ -35,14 +34,9 @@ export class AuthController {
     login = async (req: Request, res: Response) => {
         const { accessToken, refreshToken, user } = await this.authService.login(req.body);
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: env.NODE_ENV === 'production',
-            sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: REFRESH_TOKEN_TTL_MS,
-        });
+        res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
 
-        // CSRF token -> readable cookie (double-submit pattern)
+        // CSRF token -> HttpOnly cookie (double-submit pattern)
         setCsrfCookie(res);
 
         return res.status(200).json({
@@ -63,7 +57,9 @@ export class AuthController {
         }
 
         await this.authService.logout(refreshToken);
-        res.clearCookie('refreshToken');
+        // Must match the attributes the cookie was set with, or the browser
+        // treats it as a different cookie and keeps sending the dead token.
+        res.clearCookie('refreshToken', clearedCookieOptions);
 
         return res.status(200).json({
             status: 200,
@@ -76,12 +72,7 @@ export class AuthController {
 
         const { accessToken, refreshToken, user } = await this.authService.refreshTokens(rawRefreshToken);
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: env.NODE_ENV === 'production',
-            sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: REFRESH_TOKEN_TTL_MS,
-        });
+        res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
 
         // user (with memberships) rides along so the frontend can restore the
         // session and resolve the active organization on a cold page load.

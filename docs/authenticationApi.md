@@ -51,7 +51,7 @@ Replace `<PORT>` with whatever your backend's `.env` defines.
 **Expected — success:**
 - Status `200`
 - Body: `{ "status": 200, "message": "Logged in successfully", "data": { "accessToken": "<jwt>" } }`
-- **Check the Cookies tab** on the response — a `refreshToken` cookie should now be present (httpOnly, so it won't show up in `document.cookie` on a real frontend, but Postman's Cookies panel shows it since Postman inspects the raw response).
+- **Check the Cookies tab** on the response — a `refreshToken` cookie should now be present, and a `csrfToken` cookie alongside it. Both are `HttpOnly`, `SameSite=Lax`, host-only (no `Domain`), and `Secure` only in production, so neither shows up in `document.cookie` on a real frontend. The `csrfToken` value to send as `X-CSRF-Token` comes from the `GET /auth/csrf` response body.
 
 **Edge cases to test:**
 | Scenario | How | Expected |
@@ -119,4 +119,4 @@ No body needed. Relies on the `refreshToken` cookie.
 ## Notes / things to double check while testing
 
 - If a request unexpectedly returns `500`, check the **server terminal logs**, not just the Postman response — `pino-http` logs the request with the original error attached by `errorHandler` (`message` + `stack`); the response body only shows a generic message in production mode.
-- Cross-domain (`sameSite: 'none'`, `secure: true`) cookie behavior only fully matters once testing against the deployed Vercel + Render URLs — local `http://localhost` testing may behave more permissively than production will.
+- Cookies are `SameSite=Lax`, `Secure` (production only), host-only (no `Domain`), and `HttpOnly`. That only works because the browser always talks to one origin: the Vite proxy in dev, the Vercel rewrite (`webapp/vercel.json`) in production. If API calls are ever made cross-origin again (e.g. a hardcoded `https://ugnay.onrender.com` base URL), the CSRF double-submit pair breaks — `document.cookie` cannot read the HttpOnly cookie, and `SameSite=Lax` cookies are not sent cross-site.
