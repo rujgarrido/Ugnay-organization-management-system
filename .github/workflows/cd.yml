@@ -44,25 +44,40 @@ jobs:
         run: |
           RESP=$(curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}")
           echo "hook response: $RESP"
-          DEPLOY_ID=$(echo "$RESP" | jq -r '.id // .deployment.id')
-          if [ "$DEPLOY_ID" = "null" ] || [ -z "$DEPLOY_ID" ]; then
-            echo "❌ Could not parse deploy id from Vercel hook response"
+          JOB_ID=$(echo "$RESP" | jq -r '.job.id')
+          if [ "$JOB_ID" = "null" ] || [ -z "$JOB_ID" ]; then
+            echo "❌ Could not parse job id from Vercel hook response"
             exit 1
           fi
-          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+          # Give Vercel a moment to register the new deployment
+          sleep 10
 
-      - name: 4. Wait for Vercel deploy
+      - name: 5. Wait for Vercel deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           for i in $(seq 1 80); do
-            STATE=$(curl -s \
-              "https://api.vercel.com/v13/deployments/${{ steps.vercel.outputs.deploy_id }}" \
-              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-              | jq -r '.readyState')
+            # Look up the newest production deployment for this commit
+            RESP=$(curl -s \
+              "https://api.vercel.com/v6/deployments?limit=1&target=production&meta-githubCommitSha=$COMMIT_SHA" \
+              -H "Authorization: Bearer $VERCEL_TOKEN")
+            STATE=$(echo "$RESP" | jq -r '.deployments[0].readyState // "NOT_FOUND"')
             echo "[$i] Vercel: $STATE"
             case "$STATE" in
-              READY) echo "✅ Vercel deploy succeeded"; exit 0 ;;
+              READY)
+                echo "✅ Vercel deploy succeeded"
+                exit 0
+                ;;
               ERROR|CANCELED)
-                echo "❌ Vercel deploy failed: $STATE"; exit 1 ;;
+                echo "❌ Vercel deploy failed: $STATE"
+                echo "$RESP" | jq '.deployments[0]'
+                exit 1
+                ;;
+              NOT_FOUND|QUEUED|BUILDING|INITIALIZING)
+                # still starting up — keep polling
+                ;;
             esac
             sleep 10
           done
