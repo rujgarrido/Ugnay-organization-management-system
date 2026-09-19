@@ -40,4 +40,31 @@ jobs:
         run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
       - name: 3. Deploy Frontend to Vercel
-        run: curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+        id: vercel
+        run: |
+          RESP=$(curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}")
+          echo "hook response: $RESP"
+          DEPLOY_ID=$(echo "$RESP" | jq -r '.id // .deployment.id')
+          if [ "$DEPLOY_ID" = "null" ] || [ -z "$DEPLOY_ID" ]; then
+            echo "❌ Could not parse deploy id from Vercel hook response"
+            exit 1
+          fi
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+
+      - name: 4. Wait for Vercel deploy
+        run: |
+          for i in $(seq 1 80); do
+            STATE=$(curl -s \
+              "https://api.vercel.com/v13/deployments/${{ steps.vercel.outputs.deploy_id }}" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              | jq -r '.readyState')
+            echo "[$i] Vercel: $STATE"
+            case "$STATE" in
+              READY) echo "✅ Vercel deploy succeeded"; exit 0 ;;
+              ERROR|CANCELED)
+                echo "❌ Vercel deploy failed: $STATE"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "⏱️ Timed out waiting for Vercel"
+          exit 1
