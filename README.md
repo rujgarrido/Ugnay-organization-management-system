@@ -1,9 +1,7 @@
 
-# Ugnay
+# Ugnay - Multi-tenant Organization Management System
 
-A  full-stack multi-tenant organization and project management system built with a Modular Monolith
-architecture, demonstrating a real-world Agile-inspired SDLC.
-
+Ugnay is a modern organization management platform designed for student organizations and future NGO use. It provides centralized member management, committees, projects, tasks, proposals, dashboards, and permission-based access control using PERN stack and applied Software Development Lifecycle practices.
 
 ## Stack
 
