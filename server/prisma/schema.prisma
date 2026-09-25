@@ -31,13 +31,17 @@
 //   - RefreshToken.tokenHash constrained to VarChar(64) — a sha256 hex digest is
 //     always exactly 64 characters; anything else stored there is already a bug.
 
+// Prisma 7: the new `prisma-client` generator emits the client into
+// src/generated/prisma (inside rootDir so `tsc` builds it), and the
+// datasource URL moved to prisma.config.ts.
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ─────────────────────────────────────────────────────────
