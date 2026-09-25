@@ -1,85 +1,119 @@
 name: CD
 
+# Deploys only via Deploy Hooks (no platform API tokens):
+#   1. Apply Prisma migrations to Neon (direct connection string)
+#   2. Trigger Render deploy hook (backend)
+#   3. Trigger Vercel deploy hook (frontend)
+#   4. Verify both actually came up by polling their public URLs
+#
+# Required secrets:
+#   DATABASE_URL          - Neon pooled URL (tests)
+#   DIRECT_URL            - Neon direct URL (migrations)
+#   RENDER_DEPLOY_HOOK    - Render deploy hook URL
+#   VERCEL_DEPLOY_HOOK    - Vercel deploy hook URL
+#   RENDER_APP_URL        - e.g. https://ugnay-api.onrender.com (for health check)
+#   FRONTEND_URL          - e.g. https://ugnay-ruj2.vercel.app (for check)
+
 on:
   workflow_run:
-    workflows: ["CI"]       # Must match the `name:` of your CI file
+    workflows: ["CI"]       # Must match the `name:` of the CI file
     types: [completed]
     branches: [main]
-  workflow_dispatch:        # Optional: Allows you to manually trigger a deploy from the Actions tab
+  workflow_dispatch:        # Manual trigger from the Actions tab
+
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+timeout-minutes: 30
 
 jobs:
   deploy:
-    name: Deploy — Migrate DB + Render + Vercel
+    name: Deploy — Migrate DB + Render + Vercel + verify
     runs-on: ubuntu-latest
-    
-    # Only run if CI succeeded AND the branch is main (or if manually triggered)
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
-    
+
+    # workflow_run events run on the default branch: github.ref is NOT the
+    # pushed branch here — check the head branch of the CI run instead.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+
     defaults:
       run:
         working-directory: server
-        
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: server/package-lock.json
 
       - name: Install Server Dependencies
         run: npm ci
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
 
       - name: 1. Apply Prisma migrations to Neon
-        run: npx prisma migrate deploy
+        run: |
+          npx prisma validate
+          npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DIRECT_URL }} # Uses Neon's direct connection string
+          DATABASE_URL: ${{ secrets.DIRECT_URL }} # Neon direct connection string
 
       - name: 2. Deploy Backend to Render
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        run: |
+          echo "Triggering Render deploy hook..."
+          curl -fsS --max-time 30 -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          echo "Render hook accepted (deploy now building in the background)"
 
       - name: 3. Deploy Frontend to Vercel
-        id: vercel
         run: |
-          RESP=$(curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}")
-          echo "hook response: $RESP"
-          JOB_ID=$(echo "$RESP" | jq -r '.job.id')
-          if [ "$JOB_ID" = "null" ] || [ -z "$JOB_ID" ]; then
-            echo "❌ Could not parse job id from Vercel hook response"
-            exit 1
-          fi
-          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
-          # Give Vercel a moment to register the new deployment
-          sleep 10
+          echo "Triggering Vercel deploy hook..."
+          curl -fsS --max-time 30 -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+          echo "Vercel hook accepted (deploy now building in the background)"
 
-      - name: 5. Wait for Vercel deploy
+      # Hooks return 202 while the platform keeps building. These polls only
+      # verify the deployed service is UP (health 200 / frontend 200) — they
+      # are lightweight checks, not proof the new commit is live.
+      - name: 4. Verify Render is serving
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          COMMIT_SHA: ${{ github.sha }}
+          RENDER_APP_URL: ${{ secrets.RENDER_APP_URL }}
         run: |
-          for i in $(seq 1 80); do
-            # Look up the newest production deployment for this commit
-            RESP=$(curl -s \
-              "https://api.vercel.com/v6/deployments?limit=1&target=production&meta-githubCommitSha=$COMMIT_SHA" \
-              -H "Authorization: Bearer $VERCEL_TOKEN")
-            STATE=$(echo "$RESP" | jq -r '.deployments[0].readyState // "NOT_FOUND"')
-            echo "[$i] Vercel: $STATE"
-            case "$STATE" in
-              READY)
-                echo "✅ Vercel deploy succeeded"
-                exit 0
-                ;;
-              ERROR|CANCELED)
-                echo "❌ Vercel deploy failed: $STATE"
-                echo "$RESP" | jq '.deployments[0]'
-                exit 1
-                ;;
-              NOT_FOUND|QUEUED|BUILDING|INITIALIZING)
-                # still starting up — keep polling
-                ;;
-            esac
+          if [ -z "$RENDER_APP_URL" ]; then
+            echo "RENDER_APP_URL not set — skipping Render verification"
+            exit 0
+          fi
+          sleep 30 # give the platform time to pick up the deploy
+          for i in $(seq 1 60); do
+            CODE=$(curl -s -o /tmp/render-health.txt -w "%{http_code}" --max-time 10 "$RENDER_APP_URL/health" || echo 000)
+            BODY=$(cat /tmp/render-health.txt 2>/dev/null || echo "")
+            echo "[$i] Render /health -> $CODE $BODY"
+            if [ "$CODE" = "200" ] && echo "$BODY" | grep -q '"status":"ok"'; then
+              echo "✅ Render is up and healthy"
+              exit 0
+            fi
             sleep 10
           done
-          echo "⏱️ Timed out waiting for Vercel"
+          echo "❌ Render did not become healthy within 10 minutes"
+          exit 1
+
+      - name: 5. Verify Vercel is serving
+        env:
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+        run: |
+          if [ -z "$FRONTEND_URL" ]; then
+            echo "FRONTEND_URL not set — skipping Vercel verification"
+            exit 0
+          fi
+          for i in $(seq 1 40); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -L "$FRONTEND_URL" || echo 000)
+            echo "[$i] Frontend -> $CODE"
+            if [ "$CODE" = "200" ]; then
+              echo "✅ Vercel is up and serving"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "❌ Frontend did not return 200 within 10 minutes"
           exit 1
