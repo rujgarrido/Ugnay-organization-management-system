@@ -5,10 +5,20 @@ import { getApiErrorMessage } from "@/lib/api-error";
 
 export function PageLoading({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-3" aria-busy="true">
-      {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} className="h-20 w-full rounded-xl" aria-hidden="true" />
-      ))}
+    <div className="space-y-4" aria-busy="true">
+      {/* Header skeleton with a soft Ugnay brand tint */}
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48 rounded-lg bg-primary/10" aria-hidden="true" />
+        <Skeleton className="h-4 w-72 rounded-md bg-muted" aria-hidden="true" />
+      </div>
+
+      {/* Row skeletons */}
+      <div className="space-y-3">
+        {Array.from({ length: rows }, (_, index) => (
+          <Skeleton key={index} className="h-16 w-full rounded-xl" aria-hidden="true" />
+        ))}
+      </div>
+      <span className="sr-only">Loading content…</span>
     </div>
   );
 }

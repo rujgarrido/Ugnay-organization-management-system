@@ -1,7 +1,11 @@
+import { UgnayLoader } from "@/components/brand/ugnay-loader";
+
 export function RouteLoading() {
   return (
-    <main className="flex min-h-screen items-center justify-center" aria-live="polite">
-      Loading...
-    </main>
+    <UgnayLoader
+      variant="screen"
+      label="Loading your workspace…"
+      hint="Connecting your team’s progress"
+    />
   );
 }

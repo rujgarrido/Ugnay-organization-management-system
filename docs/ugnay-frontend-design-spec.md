@@ -80,6 +80,7 @@ Sidebar
 - **Purpose:** at-a-glance org health
 - **Components:**
   - 4–5 summary cards: active projects, open tasks, overdue tasks, completed tasks, pending proposals (omit last card if Epic 5 not shipped)
+  - Task status distribution donut (Recharts) — one slice per task status, with a legend of counts and percentages; fed by `tasksByStatus` from the same overview call
   - Activity feed list below/alongside the cards — "who did what, when," paginated
 - **Calls:** `GET /organizations/:orgId/dashboard`, `GET /organizations/:orgId/activity?entityType=&page=`
 - **Note:** this is where Activity Log surfaces in the UI — there is no separate Activity page in current scope.

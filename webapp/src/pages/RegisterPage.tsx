@@ -14,7 +14,7 @@ export function RegisterPage() {
       switchPrompt="Already have an account?"
       switchTo="/login"
       switchLabel="Log in"
-      brandSide="right"
+      brandSide="left"
     >
       <RegisterForm />
     </AuthLayout>

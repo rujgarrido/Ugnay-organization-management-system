@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getInitials } from "@/lib/utils";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import type {
   ActivityEntityType,
   ActivityEntityTypeFilter,
@@ -108,12 +108,7 @@ export function ActivityFeed({
           <ol className="divide-y">
             {activity.items.map((item) => (
               <li key={item.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground"
-                  aria-hidden="true"
-                >
-                  {getInitials(item.actorName)}
-                </span>
+                <InitialAvatar name={item.actorName} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm leading-snug">
                     <span className="font-medium">{item.actorName}</span>{" "}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityFeed } from "@/features/dashboard/components/activity-feed";
 import { DashboardErrorState } from "@/features/dashboard/components/dashboard-error-state";
 import { DashboardSummaryCards } from "@/features/dashboard/components/dashboard-summary-cards";
+import { TaskStatusChart } from "@/features/dashboard/components/task-status-chart";
 import { useDashboardActivity } from "@/features/dashboard/hooks/use-dashboard-activity";
 import { useDashboardOverview } from "@/features/dashboard/hooks/use-dashboard-overview";
 import type { ActivityEntityTypeFilter } from "@/features/dashboard/types/dashboard";
@@ -62,17 +63,24 @@ export function DashboardPage() {
       </header>
 
       <div className="grid gap-6 xl:grid-cols-3 xl:items-start">
-        <section aria-label="Workspace overview" className="xl:col-span-2">
+        <section aria-label="Workspace overview" className="space-y-4 xl:col-span-2">
           {overviewQuery.isError ? (
             <DashboardErrorState
               message={getApiErrorMessage(overviewQuery.error)}
               onRetry={() => overviewQuery.refetch()}
             />
           ) : (
-            <DashboardSummaryCards
-              overview={overviewQuery.data}
-              isLoading={overviewQuery.isPending}
-            />
+            <>
+              <DashboardSummaryCards
+                overview={overviewQuery.data}
+                isLoading={overviewQuery.isPending}
+              />
+              {/* The distribution card reuses the same overview payload — no extra request. */}
+              <TaskStatusChart
+                overview={overviewQuery.data}
+                isLoading={overviewQuery.isPending}
+              />
+            </>
           )}
         </section>
         {/* The recent activity feed is displayed in a separate section, which is scrollable and paginated. It shows the most recent activity in the organization, filtered by entity type. */}

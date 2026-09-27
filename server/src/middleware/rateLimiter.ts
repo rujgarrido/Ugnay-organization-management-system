@@ -1,10 +1,20 @@
 import rateLimit from 'express-rate-limit';
+import type { RequestHandler } from 'express';
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 const createRateLimiter = (
   windowMs: number,
   limit: number,
   message: string
-) => {
+): RequestHandler => {
+  // In dev/test the in-memory limiters only fight the developer: a handful of
+  // failed login attempts while debugging locks the endpoint for 15 minutes
+  // and buries the real error under 429s. Production keeps the real limits.
+  if (!isProduction) {
+    return (_req, _res, next) => next();
+  }
+
   return rateLimit({
     windowMs,
     limit,

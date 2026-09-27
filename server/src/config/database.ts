@@ -2,6 +2,7 @@
 import ws from 'ws';
 import { neonConfig } from '@neondatabase/serverless';
 import { PrismaNeon } from '@prisma/adapter-neon';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 
 // Prisma 7 emits the client into src/generated/prisma (see schema.prisma
@@ -23,7 +24,17 @@ function createPrisma(): PrismaClient {
     throw new Error('DATABASE_URL is required');
   }
 
-  const adapter = new PrismaNeon({ connectionString });
+  // Neon's HTTP/WebSocket driver only works against *.neon.tech endpoints —
+  // pointed at a vanilla Postgres (local docker-compose, Render private DB)
+  // it rejects with a non-Error value, which surfaces as the generic
+  // "Non-error value thrown" 500. Pick the adapter from the host instead.
+  const host = new URL(connectionString).hostname;
+  const isNeon = host.endsWith('.neon.tech');
+
+  const adapter = isNeon
+    ? new PrismaNeon({ connectionString })
+    : new PrismaPg(connectionString);
+
   return new PrismaClient({ adapter });
 }
 

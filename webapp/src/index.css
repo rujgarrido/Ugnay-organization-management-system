@@ -1,10 +1,14 @@
+﻿@import "tailwindcss";
 @import "tw-animate-css";
 @import "@fontsource-variable/geist";
-@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-heading: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -20,6 +24,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -36,80 +41,105 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
   --radius: 0.625rem;
-  /* Ugnay brand, expressed as tweekcn-style oklch tokens (Tailwind v4). */
-  --background: oklch(0.978 0.009 95);
-  --foreground: oklch(0.29 0.035 165);
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Ugnay Indigo: theme tokens derived from the logo gradient #144A8C -> #5447AD. tweakcn-compatible (Tailwind v4). */
+  --background: oklch(0.985 0.005 260);
+  --foreground: oklch(0.28 0.05 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.29 0.035 165);
+  --card-foreground: oklch(0.28 0.05 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.29 0.035 165);
-  --primary: oklch(0.305 0.045 170);
-  --primary-foreground: oklch(0.985 0.008 95);
-  --secondary: oklch(0.941 0.014 95);
-  --secondary-foreground: oklch(0.305 0.045 170);
-  --muted: oklch(0.941 0.014 95);
-  --muted-foreground: oklch(0.52 0.03 165);
-  --accent: oklch(0.705 0.14 35);
-  --accent-foreground: oklch(0.26 0.045 170);
+  --popover-foreground: oklch(0.28 0.05 260);
+  --primary: oklch(0.45 0.12 264);
+  --primary-foreground: oklch(0.985 0.005 260);
+  --secondary: oklch(0.94 0.015 270);
+  --secondary-foreground: oklch(0.38 0.1 264);
+  --muted: oklch(0.94 0.015 270);
+  --muted-foreground: oklch(0.42 0.04 260);
+  --accent: oklch(0.55 0.13 285);
+  --accent-foreground: oklch(0.985 0.005 260);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.905 0.015 95);
-  --input: oklch(0.905 0.015 95);
-  --ring: oklch(0.705 0.14 35);
-  --chart-1: oklch(0.705 0.14 35);
-  --chart-2: oklch(0.55 0.08 165);
-  --chart-3: oklch(0.45 0.06 170);
-  --chart-4: oklch(0.75 0.1 85);
-  --chart-5: oklch(0.6 0.12 50);
-  --sidebar: oklch(0.985 0.008 95);
-  --sidebar-foreground: oklch(0.29 0.035 165);
-  --sidebar-primary: oklch(0.305 0.045 170);
-  --sidebar-primary-foreground: oklch(0.985 0.008 95);
-  --sidebar-accent: oklch(0.941 0.014 95);
-  --sidebar-accent-foreground: oklch(0.305 0.045 170);
-  --sidebar-border: oklch(0.905 0.015 95);
-  --sidebar-ring: oklch(0.705 0.14 35);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.82 0.02 270);
+  --input: oklch(0.82 0.02 270);
+  --ring: oklch(0.55 0.13 285);
+  --chart-1: oklch(0.45 0.12 264);
+  --chart-2: oklch(0.55 0.13 285);
+  --chart-3: oklch(0.62 0.12 265);
+  --chart-4: oklch(0.68 0.1 280);
+  --chart-5: oklch(0.38 0.08 260);
+  --sidebar: oklch(0.975 0.008 260);
+  --sidebar-foreground: oklch(0.28 0.05 260);
+  --sidebar-primary: oklch(0.45 0.12 264);
+  --sidebar-primary-foreground: oklch(0.985 0.005 260);
+  --sidebar-accent: oklch(0.94 0.015 270);
+  --sidebar-accent-foreground: oklch(0.38 0.1 264);
+  --sidebar-border: oklch(0.9 0.015 270);
+  --sidebar-ring: oklch(0.55 0.13 285);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 }
 
 .dark {
-  --background: oklch(0.24 0.03 170);
-  --foreground: oklch(0.97 0.01 95);
-  --card: oklch(0.28 0.035 170);
-  --card-foreground: oklch(0.97 0.01 95);
-  --popover: oklch(0.28 0.035 170);
-  --popover-foreground: oklch(0.97 0.01 95);
-  --primary: oklch(0.705 0.14 35);
-  --primary-foreground: oklch(0.24 0.03 170);
-  --secondary: oklch(0.34 0.04 170);
-  --secondary-foreground: oklch(0.97 0.01 95);
-  --muted: oklch(0.34 0.04 170);
-  --muted-foreground: oklch(0.75 0.025 165);
-  --accent: oklch(0.705 0.14 35);
-  --accent-foreground: oklch(0.24 0.03 170);
+  --background: oklch(0.23 0.035 270);
+  --foreground: oklch(0.96 0.01 260);
+  --card: oklch(0.27 0.04 270);
+  --card-foreground: oklch(0.96 0.01 260);
+  --popover: oklch(0.27 0.04 270);
+  --popover-foreground: oklch(0.96 0.01 260);
+  --primary: oklch(0.72 0.1 265);
+  --primary-foreground: oklch(0.23 0.035 270);
+  --secondary: oklch(0.32 0.05 270);
+  --secondary-foreground: oklch(0.96 0.01 260);
+  --muted: oklch(0.32 0.05 270);
+  --muted-foreground: oklch(0.75 0.03 265);
+  --accent: oklch(0.7 0.12 285);
+  --accent-foreground: oklch(0.23 0.035 270);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.705 0.14 35);
-  --chart-1: oklch(0.705 0.14 35);
-  --chart-2: oklch(0.65 0.08 165);
-  --chart-3: oklch(0.75 0.1 85);
-  --chart-4: oklch(0.6 0.12 50);
-  --chart-5: oklch(0.55 0.08 165);
-  --sidebar: oklch(0.26 0.032 170);
-  --sidebar-foreground: oklch(0.97 0.01 95);
-  --sidebar-primary: oklch(0.705 0.14 35);
-  --sidebar-primary-foreground: oklch(0.24 0.03 170);
-  --sidebar-accent: oklch(0.34 0.04 170);
-  --sidebar-accent-foreground: oklch(0.97 0.01 95);
+  --ring: oklch(0.7 0.12 285);
+  --chart-1: oklch(0.72 0.1 265);
+  --chart-2: oklch(0.7 0.12 285);
+  --chart-3: oklch(0.62 0.12 265);
+  --chart-4: oklch(0.75 0.09 280);
+  --chart-5: oklch(0.65 0.08 260);
+  --sidebar: oklch(0.25 0.038 270);
+  --sidebar-foreground: oklch(0.96 0.01 260);
+  --sidebar-primary: oklch(0.72 0.1 265);
+  --sidebar-primary-foreground: oklch(0.23 0.035 270);
+  --sidebar-accent: oklch(0.32 0.05 270);
+  --sidebar-accent-foreground: oklch(0.96 0.01 260);
   --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.705 0.14 35);
+  --sidebar-ring: oklch(0.7 0.12 285);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 }
 
 @layer base {
@@ -117,15 +147,26 @@
     border-color: var(--border);
     outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
   }
-
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-
   html {
-    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 }
+
+@keyframes ugnay-bar {
+  0% {
+    left: -50%;
+  }
+  50% {
+    left: 40%;
+  }
+  100% {
+    left: 105%;
+  }
+}
+
