@@ -35,7 +35,20 @@ function toError(err: unknown): Error {
   if (err instanceof Error) {
     return err;
   }
-  return new Error(typeof err === 'string' ? err : 'Non-error value thrown');
+  if (typeof err === 'string') {
+    return new Error(err);
+  }
+  // Keep the actual thrown payload visible in logs — the old generic
+  // "Non-error value thrown" message made driver rejections undebuggable.
+  let detail: string;
+  try {
+    detail = JSON.stringify(err) ?? String(err);
+  } catch {
+    detail = String(err);
+  }
+  return new Error(
+    `Non-error value thrown (${typeof err}): ${detail}`,
+  );
 }
 
 /**
@@ -94,7 +107,7 @@ export function errorHandler(
   const isProd = process.env.NODE_ENV === 'production';
   res.status(500).json({
     status: 500,
-    message: isProd ? 'Internal server error' : (err as Error)?.message || 'Unknown error',
+    message: isProd ? 'Internal server error' : toError(err).message || 'Unknown error',
     data: {},
   });
 }

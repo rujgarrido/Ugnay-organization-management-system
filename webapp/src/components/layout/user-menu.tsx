@@ -3,7 +3,7 @@ import { LogOut, UserRound } from "lucide-react";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useAuth } from "@/features/auth/useAuth";
 import { useDismiss } from "@/hooks/use-dismiss";
-import { getInitials } from "@/lib/utils";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 
 /** Top-nav account menu (spec US-1.7): profile link and sign out. */
 export function UserMenu() {
@@ -21,13 +21,13 @@ export function UserMenu() {
     <div ref={ref} className="relative">
       <button
         type="button"
-        className="flex size-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground outline-none transition-colors hover:bg-secondary/80 focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="rounded-full outline-none transition-transform hover:scale-105 active:scale-95 focus-visible:ring-3 focus-visible:ring-ring/50"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label="Account menu"
         onClick={() => setIsOpen((open) => !open)}
       >
-        {getInitials(displayName)}
+        <InitialAvatar name={displayName} seed={user.id || user.email || displayName} />
       </button>
 
       {isOpen && (

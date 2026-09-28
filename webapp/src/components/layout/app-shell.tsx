@@ -5,9 +5,10 @@ import { AppSidebar } from "./app-sidebar";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
 import { UgnayMark } from "@/components/brand/ugnay-mark";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { useAuth } from "@/features/auth/useAuth";
 import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
-import { getInitials, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const SIDEBAR_STORAGE_KEY = "ugnay:sidebar-collapsed";
 
@@ -121,13 +122,11 @@ export function AppShell() {
         {user && (
           <div className="border-t p-3">
             <div className={cn("flex items-center gap-2.5 px-1", isSidebarCollapsed && "justify-center px-0")}>
-              <span
-                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground"
-                aria-hidden="true"
+              <InitialAvatar
+                name={displayName}
+                seed={user.id || user.email || displayName}
                 title={isSidebarCollapsed ? displayName : undefined}
-              >
-                {getInitials(displayName)}
-              </span>
+              />
               {!isSidebarCollapsed && (
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{displayName}</p>

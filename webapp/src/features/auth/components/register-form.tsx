@@ -5,7 +5,7 @@ import { AuthField, AuthFormError } from "./auth-field";
 import { registerSchema, type RegisterInput } from "../schemas/register-schema";
 import { useRegister } from "../hooks/use-register";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { ArrowRight, Loader2, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { Loader2, LockKeyhole, Mail, UserRound } from "lucide-react";
 
 export function RegisterForm() {
   const register = useRegister();
@@ -72,17 +72,20 @@ export function RegisterForm() {
 
       {register.isError && <AuthFormError message={getApiErrorMessage(register.error)} />}
 
-      <Button type="submit" size="lg" className="w-full" disabled={register.isPending} aria-busy={register.isPending}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full justify-center transition-all duration-200"
+        disabled={register.isPending}
+        aria-busy={register.isPending}
+      >
         {register.isPending ? (
           <>
             <Loader2 className="animate-spin" data-icon="inline-start" />
             Creating account...
           </>
         ) : (
-          <>
-            <ArrowRight data-icon="inline-end" />
-            Create account
-          </>
+          "Create account"
         )}
       </Button>
     </form>

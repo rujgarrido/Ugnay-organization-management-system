@@ -8,10 +8,10 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import type { DashboardOverview } from "../types/dashboard";
+import type { DashboardCounts, DashboardOverview } from "../types/dashboard";
 
 interface MetricDefinition {
-  key: keyof DashboardOverview;
+  key: keyof DashboardCounts;
   label: string;
   hint: string;
   icon: LucideIcon;

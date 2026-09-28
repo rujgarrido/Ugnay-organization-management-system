@@ -101,23 +101,64 @@ export async function listActivity(
   };
 }
 
+interface TaskStatusCounts {
+  backlog: number;
+  todo: number;
+  in_progress: number;
+  review: number;
+  done: number;
+}
+
+interface TaskStatusGroup {
+  status: string;
+  _count: { _all: number };
+}
+
+// Task statuses are UPPERCASE in the database and lowercase on the wire
+// (see task.service.ts) — the distribution chart follows the same contract and
+// always receives every status, so the UI never has to guess at missing keys.
+function countTasksByStatus(groups: TaskStatusGroup[]): TaskStatusCounts {
+  const counts: TaskStatusCounts = { backlog: 0, todo: 0, in_progress: 0, review: 0, done: 0 };
+
+  for (const group of groups) {
+    const status = group.status.toLowerCase();
+    if (status in counts) {
+      counts[status as keyof TaskStatusCounts] = group._count._all;
+    }
+  }
+
+  return counts;
+}
+
 // Dashboard counts (US-4.1). "Open" = every task not yet DONE; overdue =
 // open with a past due date (cut-list fallback keeps these static counts).
 export async function getDashboardCounts(organizationId: string) {
-  const [activeProjects, openTasks, overdueTasks, completedTasks] = await Promise.all([
-    prisma.project.count({ where: { organizationId, status: 'ACTIVE' } }),
-    prisma.task.count({ where: { project: { organizationId }, status: { not: 'DONE' } } }),
-    prisma.task.count({
-      where: {
-        project: { organizationId },
-        status: { not: 'DONE' },
-        dueDate: { lt: new Date() },
-      },
-    }),
-    prisma.task.count({ where: { project: { organizationId }, status: 'DONE' } }),
-  ]);
+  const [activeProjects, openTasks, overdueTasks, completedTasks, taskStatusGroups] =
+    await Promise.all([
+      prisma.project.count({ where: { organizationId, status: 'ACTIVE' } }),
+      prisma.task.count({ where: { project: { organizationId }, status: { not: 'DONE' } } }),
+      prisma.task.count({
+        where: {
+          project: { organizationId },
+          status: { not: 'DONE' },
+          dueDate: { lt: new Date() },
+        },
+      }),
+      prisma.task.count({ where: { project: { organizationId }, status: 'DONE' } }),
+      prisma.task.groupBy({
+        by: ['status'],
+        where: { project: { organizationId } },
+        _count: { _all: true },
+      }),
+    ]);
 
-  return { activeProjects, openTasks, overdueTasks, completedTasks };
+  return {
+    activeProjects,
+    openTasks,
+    overdueTasks,
+    completedTasks,
+    tasksByStatus: countTasksByStatus(taskStatusGroups),
+  };
 }
 
 // Re-exports keep the service layer as the single import point for

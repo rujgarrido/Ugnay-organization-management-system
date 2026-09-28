@@ -1,11 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthField, AuthFormError } from "./auth-field";
 import { loginSchema, type LoginInput } from "../schemas/login-schema";
 import { useLogin } from "../hooks/use-login";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { ArrowRight, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { Loader2, LockKeyhole, Mail } from "lucide-react";
 
 export function LoginForm() {
   const login = useLogin();
@@ -27,30 +28,43 @@ export function LoginForm() {
         error={form.formState.errors.email?.message}
       />
 
-      <AuthField
-        label="Password"
-        id="password"
-        type="password"
-        placeholder="Enter your password"
-        autoComplete="current-password"
-        icon={<LockKeyhole />}
-        registration={form.register("password")}
-        error={form.formState.errors.password?.message}
-      />
+      <div className="space-y-1.5">
+        <AuthField
+          label="Password"
+          id="password"
+          type="password"
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          icon={<LockKeyhole />}
+          registration={form.register("password")}
+          error={form.formState.errors.password?.message}
+        />
+        <div className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-xs font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-xs"
+          >
+            Forgot password?
+          </Link>
+        </div>
+      </div>
 
       {login.isError && <AuthFormError message={getApiErrorMessage(login.error)} />}
 
-      <Button type="submit" size="lg" className="w-full" disabled={login.isPending} aria-busy={login.isPending}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full justify-center transition-all duration-200"
+        disabled={login.isPending}
+        aria-busy={login.isPending}
+      >
         {login.isPending ? (
           <>
             <Loader2 className="animate-spin" data-icon="inline-start" />
             Logging in...
           </>
         ) : (
-          <>
-            <ArrowRight data-icon="inline-end" />
-            Log in
-          </>
+          "Log in"
         )}
       </Button>
     </form>

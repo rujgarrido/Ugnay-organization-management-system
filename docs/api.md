@@ -40,7 +40,7 @@
 | POST | `/organizations/:orgId/members` | MANAGE_MEMBERS + CSRF | Registered users only; 409 duplicate; 404 unknown email |
 | PATCH | `/organizations/:orgId/members/:memberId` | MANAGE_MEMBERS + CSRF | 409 last-admin guard |
 | DELETE | `/organizations/:orgId/members/:memberId` | MANAGE_MEMBERS + CSRF | Soft deactivate; 409 last-admin guard |
-| GET | `/organizations/:orgId/dashboard` | member | `{ activeProjects, openTasks, overdueTasks, completedTasks }` (US-4.1) |
+| GET | `/organizations/:orgId/dashboard` | member | `{ activeProjects, openTasks, overdueTasks, completedTasks, tasksByStatus: { backlog, todo, in_progress, review, done } }` (US-4.1) |
 | GET | `/organizations/:orgId/activity?entityType=&page=` | member | Page size 5; entityType: all/organization/project/task/member (US-4.2) |
 
 ## Projects / Tasks / Proposals
