@@ -15,7 +15,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "prisma:generate": "npx prisma generate",
-    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:migrate:dev": "npx prisma migrate dev",
     "prisma:studio": "npx prisma studio",
     "db:seed": "tsx prisma/seed.ts"
   },

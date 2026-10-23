@@ -1,7 +1,7 @@
 // TaskFlow — Prisma schema
 //
 // Status: placeholder. Do NOT add models here until the ERD in
-// docs/database.md is finalized (implementation guide, Section 8).
+// docs/03-database.md is finalized (implementation guide, Section 8).
 // Models should be a translation of an already-agreed design, not
 // designed directly in this file.
 
