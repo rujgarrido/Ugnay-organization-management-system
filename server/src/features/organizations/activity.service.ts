@@ -11,7 +11,7 @@ import {
 /**
  * Append-only activity writer + reader (US-4.2). The application layer never
  * updates or deletes ActivityLog rows — enforced by only exposing these two
- * operations (docs/database.md).
+ * operations (docs/03-database.md).
  */
 
 export interface ActivityWriteInput {

@@ -55,7 +55,15 @@ cd server && npm install
 cd ../webapp && npm install
 ```
 
-### 4. Run the backend
+### 4. Generate the Prisma client and migrate
+
+```bash
+cd server
+npx prisma generate
+npx prisma migrate dev
+```
+
+### 5. Run the backend
 
 ```bash
 cd server
@@ -64,7 +72,7 @@ npm run dev
 
 Visit `http://localhost:4000/health` — should return `{"status":"ok"}`.
 
-### 5. Run the frontend
+### 6. Run the frontend
 
 ```bash
 cd webapp
@@ -75,7 +83,18 @@ Visit `http://localhost:5173`.
 
 ## Documentation
 
-See `docs/`
+Start with **[`docs/00-overview.md`](docs/00-overview.md)** — index for the full set:
+
+| Doc | Covers |
+|---|---|
+| [01 — Local setup](docs/01-setup-local.md) | Fresh clone → running stack (env files, Docker, Prisma, first run) |
+| [02 — Running locally](docs/02-running-local.md) | Daily dev loop: run, test, lint, typecheck, build, DB checks |
+| [03 — Database](docs/03-database.md) | Check / migrate / seed / reset commands + schema design |
+| [04 — CI/CD](docs/04-ci-cd.md) | Pipelines, GitHub secrets, trigger & verify commands |
+| [05 — Production](docs/05-deploy-production.md) | Neon + Render + Vercel deploy, env vars, smoke test, rollback |
+| [06 — Troubleshooting](docs/06-troubleshooting.md) | Common failures → cause → fix |
+
+Reference: [`docs/api.md`](docs/api.md) · [`docs/architecture.md`](docs/architecture.md) · [`docs/requirements.md`](docs/requirements.md)
 
 ## License
 

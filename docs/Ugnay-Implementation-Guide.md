@@ -123,7 +123,7 @@ TaskFlow/
 | `product-backlog.md` | User stories with MoSCoW tags | **Before coding**, evolves each sprint |
 | `sprint-plan.md` | The 3-sprint breakdown, goals, Definition of Done per sprint | **Before coding**, updated at each sprint boundary |
 | `architecture.md` | Modular monolith rationale, layer diagram, folder conventions | **Before coding** (Section 7) |
-| `database.md` | ERD, entity descriptions, relationships | **Before coding**, refined once Prisma schema is final |
+| `03-database.md` | ERD, entity descriptions, relationships | **Before coding**, refined once Prisma schema is final |
 | `api.md` | Endpoint list, request/response shape, status codes | **Evolves during development** — start it before coding, fill in as endpoints land |
 | `deployment.md` | Environments, env vars, deploy steps, rollback notes | **During Sprint 3**, finalized at deployment |
 
@@ -158,7 +158,7 @@ TaskFlow/
 - *User stories:* "As a user, I can register and log in."
 - *Dev tasks:* Env setup, repo scaffold, Express app, Prisma + Postgres connection, auth endpoints.
 - *Testing tasks:* Unit tests for auth service, Supertest for register/login endpoints.
-- *Docs tasks:* requirements.md, architecture.md, database.md v1.
+- *Docs tasks:* requirements.md, architecture.md, 03-database.md v1.
 - *Deliverable:* A running backend where a user can register/login and receive a JWT, verified via Postman.
 - *Definition of Done:* Auth endpoints tested, documented in `api.md`, committed with conventional commits.
 
@@ -168,7 +168,7 @@ TaskFlow/
 - *User stories:* "As a user, I can create a project and add tasks to a board."
 - *Dev tasks:* Feature modules (route→service→repo) per entity; React pages for project list, board view, task CRUD; TanStack Query wiring.
 - *Testing tasks:* Integration tests per feature; authorization tests (can't access others' projects).
-- *Docs tasks:* api.md updated per endpoint; database.md finalized with ERD.
+- *Docs tasks:* api.md updated per endpoint; 03-database.md finalized with ERD.
 - *Deliverable:* A logged-in user can create a project, add a board, add/move tasks.
 - *Definition of Done:* Feature complete, tested, documented, Dockerized locally.
 
@@ -227,7 +227,7 @@ Microservices solve organizational scaling (multiple teams, independent deploys)
 8. **Timestamps** — `createdAt`, `updatedAt` on every table.
 9. **Soft deletion** 💡 — consider `deletedAt` on `Project` and `Task` only (not every table) so users can "trash" a project without hard-deleting history; skip it for `Comment` to keep MVP scope tight. ⚠️ *This is a recommendation — hard delete is also acceptable for a 2-week MVP.*
 
-**When to create the ERD:** immediately after step 6 above, before writing any Prisma schema — draw it (even a whiteboard/Excalidraw sketch) so relationships are validated on paper first. Store it in `docs/database.md` and/or `database/`.
+**When to create the ERD:** immediately after step 6 above, before writing any Prisma schema — draw it (even a whiteboard/Excalidraw sketch) so relationships are validated on paper first. Store it in `docs/03-database.md` and/or `database/`.
 
 **When to introduce Prisma:** *after* the ERD is settled. Prisma schema should be a translation of an already-agreed design, not a design tool itself — this avoids letting ORM syntax quietly steer your data model.
 
@@ -455,7 +455,7 @@ A feature is **not done** until:
 
 **DAY 3 — Architecture & DB Design**
 □ Finalize ERD, relationships, constraints, indexes
-□ Write `database.md`
+□ Write `03-database.md`
 □ Scaffold `server/` project (TS config, ESLint/Prettier, Express skeleton)
 □ `GET /health` working
 
