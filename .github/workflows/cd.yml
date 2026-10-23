@@ -25,13 +25,13 @@ concurrency:
   group: cd-production
   cancel-in-progress: false
 
-timeout-minutes: 30
+  
 
 jobs:
   deploy:
     name: Deploy — Migrate DB + Render + Vercel + verify
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     # workflow_run events run on the default branch: github.ref is NOT the
     # pushed branch here — check the head branch of the CI run instead.
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
