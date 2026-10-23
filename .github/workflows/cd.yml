@@ -86,7 +86,7 @@ jobs:
           fi
           sleep 30 # give the platform time to pick up the deploy
           for i in $(seq 1 60); do
-            CODE=$(curl -s -o /tmp/render-health.txt -w "%{http_code}" --max-time 10 "$RENDER_APP_URL/health" || echo 000)
+            CODE=$(curl -s -o /tmp/render-health.txt -w "%{http_code}" --max-time 10 "$RENDER_APP_URL/api/health" || echo 000)
             BODY=$(cat /tmp/render-health.txt 2>/dev/null || echo "")
             echo "[$i] Render /health -> $CODE $BODY"
             if [ "$CODE" = "200" ] && echo "$BODY" | grep -q '"status":"ok"'; then
